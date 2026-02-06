@@ -1,0 +1,26 @@
+{
+  "v5_results": {
+    "top1_accuracy": 0.47098214285714285,
+    "top5_accuracy": 0.8705357142857143,
+    "mean_reciprocal_rank": 0.6379563020808356,
+    "best_val_loss": 1.743669397596802,
+    "total_epochs": 15
+  },
+  "v3_baseline": {
+    "top1_accuracy": 0.303,
+    "top5_accuracy": 0.715,
+    "mean_reciprocal_rank": 0.484
+  },
+  "improvements": {
+    "top1_delta": 0.16798214285714286,
+    "top5_delta": 0.15553571428571433,
+    "mrr_delta": 0.15395630208083566
+  },
+  "configuration": {
+    "augmentation": "enhanced (RandomResizedCrop, GaussianBlur, RandomErasing)",
+    "class_balancing": true,
+    "batch_size": 16,
+    "epochs": 15,
+    "transfer_learning": "from scratch"
+  }
+}

@@ -90,41 +90,6 @@ class FashionEncoderSystem:
             logger.warning("CUDA를 사용할 수 없어 CPU를 사용합니다")
         
         return device
-    def create_config_file(output_path: str, auto_categories: list = None) -> None:
-        """샘플 설정 파일을 생성합니다. 스타일 기반 target_categories 자동 적용 가능"""
-        
-        # 기본 config 생성
-        config = TrainingConfig()
-        
-        # target_categories 설정
-        if auto_categories is not None and len(auto_categories) > 0:
-            config.target_categories = auto_categories
-        else:
-            # 기본값
-            config.target_categories = ["레트로", "로맨틱", "리조트"]
-
-        # dict로 변환
-        config_dict = {
-            'batch_size': config.batch_size,
-            'learning_rate': config.learning_rate,
-            'temperature': config.temperature,
-            'embedding_dim': config.embedding_dim,
-            'hidden_dim': config.hidden_dim,
-            'output_dim': config.output_dim,
-            'dropout_rate': config.dropout_rate,
-            'weight_decay': config.weight_decay,
-            'max_epochs': config.max_epochs,
-            'target_categories': config.target_categories,
-            'image_size': config.image_size,
-            'crop_padding': config.crop_padding
-        }
-
-        with open(output_path, 'w', encoding='utf-8') as f:
-            json.dump(config_dict, f, indent=2, ensure_ascii=False)
-
-        print(f"샘플 설정 파일이 생성되었습니다: {output_path}")
-
-    
     
     def setup_data(self, dataset_path: str, **kwargs) -> None:
         logger.info(f"데이터셋으로 데이터 모듈을 설정합니다: {dataset_path}")

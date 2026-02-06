@@ -39,7 +39,9 @@ class FashionTrainer:
                  vocab_sizes: Dict[str, int],
                  device: str = 'cuda',
                  checkpoint_dir: str = 'checkpoints',
-                 log_dir: str = 'logs'):
+                 log_dir: str = 'logs',
+                 finetune_clip: bool = False,
+                 finetune_layers: int = 2):
         """
         Initialize the Fashion Trainer.
         
@@ -49,6 +51,8 @@ class FashionTrainer:
             device: Device to use for training ('cuda' or 'cpu')
             checkpoint_dir: Directory to save checkpoints
             log_dir: Directory to save logs
+            finetune_clip: Whether to fine-tune CLIP encoder
+            finetune_layers: Number of last layers to unfreeze (2 or 4)
         """
         self.config = config
         self.vocab_sizes = vocab_sizes
@@ -79,7 +83,7 @@ class FashionTrainer:
         self.best_val_loss = float('inf')
         
         # Initialize models
-        self._initialize_models()
+        self._initialize_models(finetune_clip=finetune_clip, finetune_layers=finetune_layers)
         
         # Initialize training components
         self._initialize_training_components()
@@ -88,8 +92,13 @@ class FashionTrainer:
         print(f"Checkpoint directory: {self.checkpoint_dir}")
         print(f"Log directory: {self.log_dir}")
     
-    def _initialize_models(self):
-        """Initialize JSON Encoder and Contrastive Learner models."""
+    def _initialize_models(self, finetune_clip: bool = False, finetune_layers: int = 2):
+        """Initialize JSON Encoder and Contrastive Learner models.
+        
+        Args:
+            finetune_clip: Whether to fine-tune CLIP encoder
+            finetune_layers: Number of last layers to unfreeze (2 or 4)
+        """
         # Initialize JSON Encoder
         self.json_encoder = JSONEncoder(
             vocab_sizes=self.vocab_sizes,
@@ -99,30 +108,105 @@ class FashionTrainer:
             dropout_rate=self.config.dropout_rate
         ).to(self.device)
         
-        # Initialize CLIP encoder (frozen)
-        self.clip_encoder = CLIPVisionModel.from_pretrained("openai/clip-vit-base-patch32")
-        self.clip_encoder = self.clip_encoder.to(self.device)
+        # Initialize FashionCLIP from Hugging Face
+        print("Loading FashionCLIP model from Hugging Face (patrickjohncyh/fashion-clip)...")
+        try:
+            from transformers import CLIPVisionModel
+            self.clip_encoder = CLIPVisionModel.from_pretrained("patrickjohncyh/fashion-clip")
+            self.clip_encoder = self.clip_encoder.to(self.device)
+            self.using_fashionclip = True
+            print("✓ FashionCLIP loaded successfully (fashion-specific)")
+        except Exception as e:
+            print(f"Warning: Could not load FashionCLIP ({e})")
+            print("Falling back to standard CLIP (openai/clip-vit-base-patch32)...")
+            from transformers import CLIPVisionModel
+            self.clip_encoder = CLIPVisionModel.from_pretrained("openai/clip-vit-base-patch32")
+            self.clip_encoder = self.clip_encoder.to(self.device)
+            self.using_fashionclip = False
+        
+        # Fine-tuning setup
+        self.finetune_clip = finetune_clip
+        if finetune_clip:
+            self._setup_clip_finetuning(finetune_layers)
         
         # Initialize Contrastive Learner
         self.contrastive_learner = ContrastiveLearner(
             json_encoder=self.json_encoder,
             clip_encoder=self.clip_encoder,
-            temperature=self.config.temperature
+            temperature=self.config.temperature,
+            using_fashionclip=self.using_fashionclip
         ).to(self.device)
         
+        # Count trainable parameters
+        json_trainable = sum(p.numel() for p in self.json_encoder.parameters() if p.requires_grad)
+        clip_trainable = sum(p.numel() for p in self.clip_encoder.parameters() if p.requires_grad)
+        total_trainable = json_trainable + clip_trainable
+        
         print(f"Models initialized:")
+        print(f"  Image Encoder: {'FashionCLIP (fashion-specific)' if self.using_fashionclip else 'Standard CLIP'}")
+        print(f"  Fine-tuning: {'Enabled (last {} layers)'.format(finetune_layers) if finetune_clip else 'Disabled (frozen)'}")
         print(f"  JSON Encoder parameters: {sum(p.numel() for p in self.json_encoder.parameters()):,}")
         print(f"  CLIP Encoder parameters: {sum(p.numel() for p in self.clip_encoder.parameters()):,}")
-        print(f"  Trainable parameters: {sum(p.numel() for p in self.json_encoder.parameters() if p.requires_grad):,}")
+        print(f"  Trainable parameters:")
+        print(f"    - JSON Encoder: {json_trainable:,}")
+        print(f"    - CLIP Encoder: {clip_trainable:,}")
+        print(f"    - Total: {total_trainable:,}")
+    
+    def _setup_clip_finetuning(self, num_layers: int = 2):
+        """Setup CLIP fine-tuning by unfreezing last N layers.
+        
+        Args:
+            num_layers: Number of last layers to unfreeze (2 or 4)
+        """
+        # First freeze all parameters
+        for param in self.clip_encoder.parameters():
+            param.requires_grad = False
+        
+        # Unfreeze last N layers
+        total_layers = 12  # ViT-B/32 has 12 transformer layers
+        layers_to_unfreeze = list(range(total_layers - num_layers, total_layers))
+        
+        print(f"  Unfreezing CLIP layers: {layers_to_unfreeze}")
+        
+        for name, param in self.clip_encoder.named_parameters():
+            for layer_idx in layers_to_unfreeze:
+                if f'encoder.layers.{layer_idx}' in name:
+                    param.requires_grad = True
+                    break
+        
+        # Also unfreeze post_layernorm and projection if they exist
+        for name, param in self.clip_encoder.named_parameters():
+            if 'post_layernorm' in name or 'visual_projection' in name:
+                param.requires_grad = True
     
     def _initialize_training_components(self):
         """Initialize optimizer, scheduler, and tensorboard writer."""
-        # Optimizer (only train JSON encoder parameters)
-        self.optimizer = optim.Adam(
-            self.json_encoder.parameters(),
-            lr=self.config.learning_rate,
-            weight_decay=self.config.weight_decay
-        )
+        # Collect trainable parameters with different learning rates
+        if hasattr(self, 'finetune_clip') and self.finetune_clip:
+            # Differential learning rates for fine-tuning
+            param_groups = [
+                {
+                    'params': [p for p in self.json_encoder.parameters() if p.requires_grad],
+                    'lr': self.config.learning_rate,
+                    'name': 'json_encoder'
+                },
+                {
+                    'params': [p for p in self.clip_encoder.parameters() if p.requires_grad],
+                    'lr': self.config.learning_rate * 0.1,  # 10x lower LR for CLIP
+                    'name': 'clip_encoder'
+                }
+            ]
+            self.optimizer = optim.Adam(param_groups, weight_decay=self.config.weight_decay)
+            print(f"  Using differential learning rates:")
+            print(f"    - JSON Encoder: {self.config.learning_rate}")
+            print(f"    - CLIP Encoder: {self.config.learning_rate * 0.1} (10x lower)")
+        else:
+            # Standard optimizer (only JSON encoder)
+            self.optimizer = optim.Adam(
+                self.json_encoder.parameters(),
+                lr=self.config.learning_rate,
+                weight_decay=self.config.weight_decay
+            )
         
         # Learning rate scheduler
         self.scheduler = optim.lr_scheduler.CosineAnnealingLR(

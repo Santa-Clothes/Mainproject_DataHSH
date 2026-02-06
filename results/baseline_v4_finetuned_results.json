@@ -1,0 +1,83 @@
+{
+  "timestamp": "2026-02-06T14:14:20.713639",
+  "model_name": "Fashion JSON Encoder Baseline v4",
+  "version": "v4.0",
+  "base_model": "baseline_v3_fashionclip (fine-tuned)",
+  "key_change": "FashionCLIP fine-tuning (last 2 layers unfrozen)",
+  "configuration": {
+    "temperature": 0.1,
+    "batch_size": 16,
+    "epochs": 15,
+    "learning_rate_json": 0.0001,
+    "learning_rate_clip": 1e-05,
+    "image_encoder": "FashionCLIP (patrickjohncyh/fashion-clip) - Fine-tuned",
+    "finetuned_layers": "Last 2 layers (layers 10-11)",
+    "dataset": "K-Fashion 2172 items",
+    "class_distribution": {
+      "레트로": 196,
+      "로맨틱": 994,
+      "리조트": 998
+    }
+  },
+  "final_performance": {
+    "top1_accuracy": 0.29398148148148145,
+    "top5_accuracy": 0.7199074074074074,
+    "mrr": 0.48059086667166817,
+    "validation_loss": 2.2827468889730946,
+    "positive_similarity": 0.15747615391457523
+  },
+  "training_progression": {
+    "train_losses": [
+      2.4000661505593195,
+      2.0338060171515853,
+      1.872159308857388,
+      1.771204110648897,
+      1.6995714958067294,
+      1.6386617422103882,
+      1.6011042330000136,
+      1.5766327005845528,
+      1.533072907615591,
+      1.5191308414494549,
+      1.5055671036243439,
+      1.4930975834528606,
+      1.4739972099109933
+    ],
+    "val_losses": [
+      2.604495498869154,
+      2.4653552020037615,
+      2.398851721375077,
+      2.3893464936150446,
+      2.33834496250859,
+      2.320709330064279,
+      2.30536836164969,
+      2.3115082758444325,
+      2.298347000722532,
+      2.292473651744701,
+      2.289683293413233,
+      2.2827468889730946,
+      2.282949138570715
+    ],
+    "learning_rates": [
+      9.891830623632339e-05,
+      9.572050015330874e-05,
+      9.05463412215599e-05,
+      8.362196501476348e-05,
+      7.525e-05,
+      6.57963412215599e-05,
+      5.567415893174885e-05,
+      4.532584106825116e-05,
+      3.5203658778440106e-05,
+      2.5750000000000013e-05,
+      1.7378034985236535e-05,
+      1.0453658778440107e-05,
+      5.279499846691252e-06
+    ]
+  },
+  "improvements_over_v3": {
+    "approach": "Fine-tuning last 2 layers of FashionCLIP",
+    "learning_strategy": "Differential learning rates (CLIP: 10x lower)",
+    "expected_gains": "Better K-Fashion domain adaptation"
+  },
+  "training_time_minutes": 33.115071551005045,
+  "notes": "v4 fine-tunes FashionCLIP for K-Fashion dataset adaptation"
+}

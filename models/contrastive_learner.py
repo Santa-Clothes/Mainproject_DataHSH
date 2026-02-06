@@ -1,7 +1,7 @@
 """
 JSON과 이미지 임베딩을 정렬하는 대조 학습 시스템입니다.
 
-이 모듈은 대조 학습을 위해 JSON 인코더와 고정된 CLIP 이미지 인코더를 
+이 모듈은 대조 학습을 위해 JSON 인코더와 FashionCLIP/CLIP 이미지 인코더를 
 결합하는 ContrastiveLearner 클래스를 구현합니다.
 """
 
@@ -20,27 +20,31 @@ class ContrastiveLearner(nn.Module):
     
     배치 내 네거티브 샘플링과 함께 InfoNCE 손실을 사용하여 
     패션 이미지와 JSON 메타데이터 간의 공유 임베딩 공간을 학습합니다.
+    FashionCLIP 또는 표준 CLIP을 지원합니다.
     """
     
     def __init__(self, json_encoder: JSONEncoder, 
                  clip_encoder: CLIPVisionModel,
-                 temperature: float = 0.07):
+                 temperature: float = 0.07,
+                 using_fashionclip: bool = False):
         """
         대조 학습 시스템을 초기화합니다.
         
         Args:
             json_encoder: 메타데이터 처리를 위한 JSONEncoder 모델
-            clip_encoder: 사전 훈련된 CLIP 비전 모델 (고정됨)
+            clip_encoder: FashionCLIP 또는 표준 CLIP 비전 모델 (고정됨)
             temperature: InfoNCE 손실을 위한 온도 매개변수
+            using_fashionclip: FashionCLIP 사용 여부
         """
         super().__init__()
         
         self.json_encoder = json_encoder
         self.clip_encoder = clip_encoder
         self.temperature = temperature
+        self.using_fashionclip = using_fashionclip
         
-        # CLIP 출력 차원을 가져오고 필요시 프로젝션 레이어 추가
-        clip_output_dim = self.clip_encoder.config.hidden_size  # ViT-B/32의 경우 보통 768
+        # Determine output dimension and setup projection if needed
+        clip_output_dim = self.clip_encoder.config.hidden_size  # 768 for ViT-B/32
         json_output_dim = self.json_encoder.output_dim  # 512
         
         if clip_output_dim != json_output_dim:
@@ -65,9 +69,9 @@ class ContrastiveLearner(nn.Module):
         Returns:
             torch.Tensor: InfoNCE loss value (scalar)
         """
-        # Get image embeddings from frozen CLIP encoder
-        with torch.no_grad():
-            image_features = self.clip_encoder(images).pooler_output
+        # Get image embeddings from CLIP/FashionCLIP
+        # Note: No torch.no_grad() if fine-tuning is enabled
+        image_features = self.clip_encoder(images).pooler_output
         
         # Project to target dimension if needed
         if self.image_projection is not None:
@@ -101,7 +105,7 @@ class ContrastiveLearner(nn.Module):
                 - 'json_embeddings': [batch_size, 512]
                 - 'similarity_matrix': [batch_size, batch_size]
         """
-        # Get image embeddings
+        # Get image embeddings from CLIP/FashionCLIP
         with torch.no_grad():
             image_features = self.clip_encoder(images).pooler_output
         

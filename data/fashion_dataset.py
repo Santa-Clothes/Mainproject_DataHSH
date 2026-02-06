@@ -246,7 +246,8 @@ def create_fashion_dataloader(dataset: FashionDataset,
                             batch_size: int = 32,
                             shuffle: bool = True,
                             num_workers: int = 0,
-                            pin_memory: bool = True) -> DataLoader:
+                            pin_memory: bool = True,
+                            drop_last: bool = None) -> DataLoader:
     """
     Create a DataLoader for the Fashion Dataset.
     
@@ -256,10 +257,15 @@ def create_fashion_dataloader(dataset: FashionDataset,
         shuffle: Whether to shuffle the data
         num_workers: Number of worker processes for data loading
         pin_memory: Whether to pin memory for faster GPU transfer
+        drop_last: Whether to drop last incomplete batch (default: True for training, False for validation)
         
     Returns:
         PyTorch DataLoader configured for fashion data
     """
+    # Auto-determine drop_last based on shuffle if not specified
+    if drop_last is None:
+        drop_last = shuffle  # True for training (shuffle=True), False for validation (shuffle=False)
+    
     return DataLoader(
         dataset=dataset,
         batch_size=batch_size,
@@ -267,7 +273,7 @@ def create_fashion_dataloader(dataset: FashionDataset,
         num_workers=num_workers,
         pin_memory=pin_memory,
         collate_fn=collate_fashion_batch,
-        drop_last=True  # Drop incomplete batches for consistent training
+        drop_last=drop_last
     )
 
 
@@ -392,11 +398,17 @@ class FashionDataModule:
         print(f"Loaded {len(fashion_items)} fashion items")
         print(f"Vocabulary sizes: {self.dataset_loader.get_vocab_sizes()}")
         
-        # Create train/val split
+        # Create train/val split with random shuffle
+        import random
         total_items = len(fashion_items)
+        
+        # Shuffle for random split (set seed for reproducibility)
+        random.seed(42)
+        random.shuffle(fashion_items)
+        
         train_size = int(total_items * self.train_split)
         
-        # Simple split (could be improved with stratification)
+        # Split after shuffling
         train_items = fashion_items[:train_size]
         val_items = fashion_items[train_size:]
         
