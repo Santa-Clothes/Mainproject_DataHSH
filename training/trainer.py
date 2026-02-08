@@ -246,6 +246,12 @@ class FashionTrainer:
         print("STARTING JSON ENCODER STANDALONE TRAINING")
         print(f"{'='*60}")
         
+        # Print dataset and dataloader info
+        print(f"Train dataset size: {len(train_loader.dataset)}")
+        print(f"Train dataloader batches: {len(train_loader)}")
+        print(f"Val dataset size: {len(val_loader.dataset)}")
+        print(f"Val dataloader batches: {len(val_loader)}")
+        
         # Start monitoring
         self.monitor.start_training("Stage 1: JSON Encoder Standalone", num_epochs)
         
@@ -267,6 +273,9 @@ class FashionTrainer:
             num_batches = 0
             
             for batch_idx, batch in enumerate(train_loader):
+                # Move batch to device FIRST
+                batch = self._move_batch_to_device(batch)
+                
                 # Convert ProcessedBatch to dict format
                 json_batch = self._convert_batch_to_dict(batch)
                 
@@ -274,8 +283,8 @@ class FashionTrainer:
                 self.optimizer.zero_grad()
                 embeddings = self.json_encoder(json_batch)
                 
-                # Create random target for sanity check
-                target = torch.randn_like(embeddings)
+                # Create random target for sanity check (on same device)
+                target = torch.randn_like(embeddings).to(self.device)
                 loss = criterion(embeddings, target)
                 
                 # Backward pass
@@ -356,11 +365,14 @@ class FashionTrainer:
         
         with torch.no_grad():
             for batch in val_loader:
+                # Move batch to device
+                batch = self._move_batch_to_device(batch)
+                
                 json_batch = self._convert_batch_to_dict(batch)
                 embeddings = self.json_encoder(json_batch)
                 
-                # Random target for consistency with training
-                target = torch.randn_like(embeddings)
+                # Random target for consistency with training (on same device)
+                target = torch.randn_like(embeddings).to(self.device)
                 loss = criterion(embeddings, target)
                 
                 total_loss += loss.item()
@@ -393,6 +405,9 @@ class FashionTrainer:
         
         with torch.no_grad():
             for batch in val_loader:
+                # Move batch to device
+                batch = self._move_batch_to_device(batch)
+                
                 json_batch = self._convert_batch_to_dict(batch)
                 embeddings = self.json_encoder(json_batch)
                 all_embeddings.append(embeddings.cpu())
@@ -446,6 +461,12 @@ class FashionTrainer:
         print(f"Batch size: {self.config.batch_size}")
         print(f"Learning rate: {self.config.learning_rate}")
         print(f"Temperature: {self.config.temperature}")
+        
+        # Print dataset and dataloader info
+        print(f"\nTrain dataset size: {len(train_loader.dataset)}")
+        print(f"Train dataloader batches: {len(train_loader)}")
+        print(f"Val dataset size: {len(val_loader.dataset)}")
+        print(f"Val dataloader batches: {len(val_loader)}")
         
         # Start monitoring
         self.monitor.start_training("Stage 2: Contrastive Learning", num_epochs)
@@ -775,7 +796,10 @@ class FashionTrainer:
         }
     
     def _move_batch_to_device(self, batch: ProcessedBatch) -> ProcessedBatch:
-        """Move batch tensors to the specified device."""
+        """
+        Move batch tensors to the specified device.
+        Ensures all tensors including index tensors are on the correct device.
+        """
         return ProcessedBatch(
             images=batch.images.to(self.device),
             category_ids=batch.category_ids.to(self.device),
@@ -787,6 +811,15 @@ class FashionTrainer:
             material_mask=batch.material_mask.to(self.device),
             detail_mask=batch.detail_mask.to(self.device)
         )
+    
+    def _safe_move_to_device(self, tensor: torch.Tensor) -> torch.Tensor:
+        """
+        Safely move a tensor to the target device.
+        Handles both data and index tensors.
+        """
+        if tensor.device != torch.device(self.device):
+            return tensor.to(self.device)
+        return tensor
     
     def load_checkpoint(self, checkpoint_path: str) -> Dict[str, Any]:
         """Load model from checkpoint."""

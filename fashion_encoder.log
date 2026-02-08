@@ -1,0 +1,143 @@
+2026-02-07 01:03:54,198 - main - INFO - 기본 설정을 사용합니다
+2026-02-07 01:03:54,201 - main - WARNING - CUDA를 사용할 수 없어 CPU를 사용합니다
+2026-02-07 01:03:54,201 - main - INFO - 패션 인코더 시스템이 초기화되었습니다
+2026-02-07 01:03:54,202 - main - INFO - 장치: cpu
+2026-02-07 01:03:54,202 - main - INFO - 설정: TrainingConfig(batch_size=64, learning_rate=0.0001, temperature=0.1, embedding_dim=128, hidden_dim=256, output_dim=512, dropout_rate=0.1, weight_decay=1e-05, max_epochs=100, target_categories=['레트로', '로맨틱', '리조트'], image_size=224, crop_padding=0.1)
+2026-02-07 01:03:54,202 - main - INFO - 데이터셋으로 데이터 모듈을 설정합니다: D:/K-Fashion
+2026-02-07 01:03:54,203 - main - WARNING - JSON 디렉토리를 찾을 수 없습니다. 기본 target_categories 사용
+2026-02-07 01:03:54,203 - main - INFO - 자동 감지된 target_categories: ['레트로', '로맨틱', '리조트']
+2026-02-07 01:03:54,205 - main - ERROR - 데이터 설정 실패: JSON directory not found: D:\K-Fashion\annotations
+2026-02-07 01:05:10,753 - main - INFO - 기본 설정을 사용합니다
+2026-02-07 01:05:10,754 - main - WARNING - CUDA를 사용할 수 없어 CPU를 사용합니다
+2026-02-07 01:05:10,754 - main - INFO - 패션 인코더 시스템이 초기화되었습니다
+2026-02-07 01:05:10,754 - main - INFO - 장치: cpu
+2026-02-07 01:05:10,754 - main - INFO - 설정: TrainingConfig(batch_size=64, learning_rate=0.0001, temperature=0.1, embedding_dim=128, hidden_dim=256, output_dim=512, dropout_rate=0.1, weight_decay=1e-05, max_epochs=100, target_categories=['레트로', '로맨틱', '리조트'], image_size=224, crop_padding=0.1)
+2026-02-07 01:05:10,754 - main - INFO - 데이터셋으로 데이터 모듈을 설정합니다: D:/K-Fashion/Training/라벨링데이터
+2026-02-07 01:05:10,755 - main - WARNING - JSON 디렉토리를 찾을 수 없습니다. 기본 target_categories 사용
+2026-02-07 01:05:10,755 - main - INFO - 자동 감지된 target_categories: ['레트로', '로맨틱', '리조트']
+2026-02-07 01:11:06,964 - main - INFO - 기본 설정을 사용합니다
+2026-02-07 01:11:06,964 - main - WARNING - CUDA를 사용할 수 없어 CPU를 사용합니다
+2026-02-07 01:11:06,964 - main - INFO - 패션 인코더 시스템이 초기화되었습니다
+2026-02-07 01:11:06,965 - main - INFO - 장치: cpu
+2026-02-07 01:11:06,965 - main - INFO - 설정: TrainingConfig(batch_size=64, learning_rate=0.0001, temperature=0.1, embedding_dim=128, hidden_dim=256, output_dim=512, dropout_rate=0.1, weight_decay=1e-05, max_epochs=100, target_categories=['레트로', '로맨틱', '리조트'], image_size=224, crop_padding=0.1)
+2026-02-07 01:11:06,965 - main - INFO - 데이터셋으로 데이터 모듈을 설정합니다: D:/K-Fashion/Training/라벨링데이터
+2026-02-07 01:11:06,966 - main - WARNING - JSON 디렉토리를 찾을 수 없습니다. 기본 target_categories 사용
+2026-02-07 01:11:06,966 - main - INFO - 자동 감지된 target_categories: ['레트로', '로맨틱', '리조트']
+2026-02-07 02:33:48,427 - main - INFO - 기본 설정을 사용합니다
+2026-02-07 02:33:48,443 - main - INFO - CUDA 사용 가능: NVIDIA GeForce GTX 1660 SUPER
+2026-02-07 02:33:48,444 - main - INFO - CUDA 메모리: 6.4 GB
+2026-02-07 02:33:48,444 - main - INFO - 패션 인코더 시스템이 초기화되었습니다
+2026-02-07 02:33:48,444 - main - INFO - 장치: cuda
+2026-02-07 02:33:48,445 - main - INFO - 설정: TrainingConfig(batch_size=64, learning_rate=0.0001, temperature=0.1, embedding_dim=128, hidden_dim=256, output_dim=512, dropout_rate=0.1, weight_decay=1e-05, max_epochs=100, target_categories=['레트로', '로맨틱', '리조트'], image_size=224, crop_padding=0.1)
+2026-02-07 02:33:48,445 - main - INFO - 데이터셋으로 데이터 모듈을 설정합니다: D:/K-Fashion/Training/라벨링데이터
+2026-02-07 02:33:48,446 - main - WARNING - JSON 디렉토리를 찾을 수 없습니다. 기본 target_categories 사용
+2026-02-07 02:33:48,446 - main - INFO - 자동 감지된 target_categories: ['레트로', '로맨틱', '리조트']
+2026-02-07 02:43:18,571 - main - INFO - 기본 설정을 사용합니다
+2026-02-07 02:43:18,576 - main - INFO - CUDA 사용 가능: NVIDIA GeForce GTX 1660 SUPER
+2026-02-07 02:43:18,576 - main - INFO - CUDA 메모리: 6.4 GB
+2026-02-07 02:43:18,577 - main - INFO - 패션 인코더 시스템이 초기화되었습니다
+2026-02-07 02:43:18,577 - main - INFO - 장치: cuda
+2026-02-07 02:43:18,577 - main - INFO - 설정: TrainingConfig(batch_size=64, learning_rate=0.0001, temperature=0.1, embedding_dim=128, hidden_dim=256, output_dim=512, dropout_rate=0.1, weight_decay=1e-05, max_epochs=100, target_categories=['레트로', '로맨틱', '리조트'], image_size=224, crop_padding=0.1)
+2026-02-07 02:43:18,577 - main - INFO - 데이터셋으로 데이터 모듈을 설정합니다: D:/K-Fashion/Training/라벨링데이터
+2026-02-07 02:43:18,584 - main - INFO - 폴더에서 감지된 카테고리 (23개): ['레트로', '로맨틱', '리조트', '매니시', '모던', '밀리터리', '섹시', '소피스트케이티드', '스트리트', '스포티', '아방가르드', '오리엔탈', '웨스턴', '젠더리스', '컨트리', '클래식', '키치', '톰보이', '펑크', '페미닌', '프레피', '히피', '힙합']
+2026-02-07 02:43:18,584 - main - INFO - 사용할 target_categories: ['레트로', '로맨틱', '리조트', '매니시', '모던', '밀리터리', '섹시', '소피스트케이티드', '스트리트', '스포티', '아방가르드', '오리엔탈', '웨스턴', '젠더리스', '컨트리', '클래식', '키치', '톰보이', '펑크', '페미닌', '프레피', '히피', '힙합']
+2026-02-07 04:01:35,333 - main - INFO - 데이터 설정이 성공적으로 완료되었습니다
+2026-02-07 04:01:35,334 - main - INFO - 학습 샘플: 1740
+2026-02-07 04:01:35,334 - main - INFO - 검증 샘플: 435
+2026-02-07 04:01:35,334 - main - INFO - 어휘 크기: {'category': 4, 'style': 4, 'silhouette': 8, 'material': 22, 'detail': 38}
+2026-02-07 04:01:35,334 - main - INFO - 트레이너를 설정합니다
+2026-02-07 04:01:35,334 - main - INFO - 체크포인트 디렉토리: training_output\checkpoints
+2026-02-07 04:01:35,334 - main - INFO - 로그 디렉토리: training_output\logs
+2026-02-07 04:01:36,114 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/patrickjohncyh/fashion-clip/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-07 04:01:36,128 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/patrickjohncyh/fashion-clip/7e3ba62ce16b379a1ab479346b66f192e76f51b7/config.json "HTTP/1.1 200 OK"
+2026-02-07 04:01:36,147 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/resolve-cache/models/patrickjohncyh/fashion-clip/7e3ba62ce16b379a1ab479346b66f192e76f51b7/config.json "HTTP/1.1 200 OK"
+2026-02-07 04:01:36,386 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/patrickjohncyh/fashion-clip/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+2026-02-07 04:01:36,606 - httpx - INFO - HTTP Request: GET https://huggingface.co/api/models/patrickjohncyh/fashion-clip/xet-read-token/7e3ba62ce16b379a1ab479346b66f192e76f51b7 "HTTP/1.1 200 OK"
+2026-02-07 04:02:15,787 - main - INFO - 트레이너 설정이 완료되었습니다
+2026-02-07 04:02:15,787 - main - INFO - 완전한 학습 파이프라인을 시작합니다
+2026-02-07 04:02:15,787 - main - INFO - 1단계: 독립 JSON 인코더 학습 (5 에포크)
+2026-02-07 10:11:07,791 - main - INFO - 기본 설정을 사용합니다
+2026-02-07 10:11:07,796 - main - INFO - CUDA 사용 가능: NVIDIA GeForce GTX 1660 SUPER
+2026-02-07 10:11:07,797 - main - INFO - CUDA 메모리: 6.4 GB
+2026-02-07 10:11:07,797 - main - INFO - 패션 인코더 시스템이 초기화되었습니다
+2026-02-07 10:11:07,797 - main - INFO - 장치: cuda
+2026-02-07 10:11:07,797 - main - INFO - 설정: TrainingConfig(batch_size=64, learning_rate=0.0001, temperature=0.1, embedding_dim=128, hidden_dim=256, output_dim=512, dropout_rate=0.1, weight_decay=1e-05, max_epochs=100, target_categories=['레트로', '로맨틱', '리조트'], image_size=224, crop_padding=0.1)
+2026-02-07 10:11:07,798 - main - INFO - 데이터셋으로 데이터 모듈을 설정합니다: D:/K-Fashion/Training/라벨링데이터
+2026-02-07 10:11:07,801 - main - INFO - 폴더에서 감지된 카테고리 (23개): ['레트로', '로맨틱', '리조트', '매니시', '모던', '밀리터리', '섹시', '소피스트케이티드', '스트리트', '스포티', '아방가르드', '오리엔탈', '웨스턴', '젠더리스', '컨트리', '클래식', '키치', '톰보이', '펑크', '페미닌', '프레피', '히피', '힙합']
+2026-02-07 10:11:07,801 - main - INFO - 사용할 target_categories: ['레트로', '로맨틱', '리조트', '매니시', '모던', '밀리터리', '섹시', '소피스트케이티드', '스트리트', '스포티', '아방가르드', '오리엔탈', '웨스턴', '젠더리스', '컨트리', '클래식', '키치', '톰보이', '펑크', '페미닌', '프레피', '히피', '힙합']
+2026-02-07 11:00:24,711 - main - INFO - 데이터 설정이 성공적으로 완료되었습니다
+2026-02-07 11:00:24,714 - main - INFO - 학습 샘플: 1740
+2026-02-07 11:00:24,714 - main - INFO - 검증 샘플: 435
+2026-02-07 11:00:24,715 - main - INFO - 어휘 크기: {'category': 4, 'style': 4, 'silhouette': 8, 'material': 22, 'detail': 38}
+2026-02-07 11:00:24,715 - main - INFO - 트레이너를 설정합니다
+2026-02-07 11:00:24,715 - main - INFO - 체크포인트 디렉토리: training_output\checkpoints
+2026-02-07 11:00:24,715 - main - INFO - 로그 디렉토리: training_output\logs
+2026-02-07 11:00:25,619 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/patrickjohncyh/fashion-clip/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-07 11:00:25,632 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/patrickjohncyh/fashion-clip/7e3ba62ce16b379a1ab479346b66f192e76f51b7/config.json "HTTP/1.1 200 OK"
+2026-02-07 11:00:25,846 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/patrickjohncyh/fashion-clip/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+2026-02-07 11:00:25,847 - huggingface_hub.utils._http - WARNING - Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+2026-02-07 11:00:27,217 - main - INFO - 트레이너 설정이 완료되었습니다
+2026-02-07 11:00:27,217 - main - INFO - 완전한 학습 파이프라인을 시작합니다
+2026-02-07 11:00:27,219 - main - INFO - 1단계: 독립 JSON 인코더 학습 (5 에포크)
+2026-02-07 18:54:42,596 - main - INFO - 데이터 설정이 성공적으로 완료되었습니다
+2026-02-07 18:54:42,596 - main - INFO - 학습 샘플: 763061
+2026-02-07 18:54:42,596 - main - INFO - 검증 샘플: 190766
+2026-02-07 18:54:42,597 - main - INFO - 어휘 크기: {'category': 24, 'style': 24, 'silhouette': 8, 'material': 26, 'detail': 41}
+2026-02-07 18:54:42,597 - main - INFO - 트레이너를 설정합니다
+2026-02-07 18:54:42,597 - main - INFO - 체크포인트 디렉토리: training_output\checkpoints
+2026-02-07 18:54:42,599 - main - INFO - 로그 디렉토리: training_output\logs
+2026-02-07 18:54:43,515 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/patrickjohncyh/fashion-clip/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-07 18:54:43,530 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/patrickjohncyh/fashion-clip/7e3ba62ce16b379a1ab479346b66f192e76f51b7/config.json "HTTP/1.1 200 OK"
+2026-02-07 18:54:43,768 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/patrickjohncyh/fashion-clip/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+2026-02-07 18:54:45,026 - main - INFO - 트레이너 설정이 완료되었습니다
+2026-02-07 18:54:45,027 - main - INFO - 완전한 학습 파이프라인을 시작합니다
+2026-02-07 18:54:45,030 - main - INFO - 1단계: 독립 JSON 인코더 학습 (5 에포크)
+2026-02-07 19:01:20,221 - main - INFO - 기본 설정을 사용합니다
+2026-02-07 19:01:20,226 - main - INFO - CUDA 사용 가능: NVIDIA GeForce GTX 1660 SUPER
+2026-02-07 19:01:20,226 - main - INFO - CUDA 메모리: 6.4 GB
+2026-02-07 19:01:20,227 - main - INFO - 패션 인코더 시스템이 초기화되었습니다
+2026-02-07 19:01:20,227 - main - INFO - 장치: cuda
+2026-02-07 19:01:20,227 - main - INFO - 설정: TrainingConfig(batch_size=64, learning_rate=0.0001, temperature=0.1, embedding_dim=128, hidden_dim=256, output_dim=512, dropout_rate=0.1, weight_decay=1e-05, max_epochs=100, target_categories=['레트로', '로맨틱', '리조트'], image_size=224, crop_padding=0.1)
+2026-02-07 19:01:20,227 - main - INFO - 데이터셋으로 데이터 모듈을 설정합니다: D:/K-Fashion/Training/라벨링데이터
+2026-02-07 19:01:20,229 - main - INFO - 폴더에서 감지된 카테고리 (23개): ['레트로', '로맨틱', '리조트', '매니시', '모던', '밀리터리', '섹시', '소피스트케이티드', '스트리트', '스포티', '아방가르드', '오리엔탈', '웨스턴', '젠더리스', '컨트리', '클래식', '키치', '톰보이', '펑크', '페미닌', '프레피', '히피', '힙합']
+2026-02-07 19:01:20,230 - main - INFO - 사용할 target_categories: ['레트로', '로맨틱', '리조트', '매니시', '모던', '밀리터리', '섹시', '소피스트케이티드', '스트리트', '스포티', '아방가르드', '오리엔탈', '웨스턴', '젠더리스', '컨트리', '클래식', '키치', '톰보이', '펑크', '페미닌', '프레피', '히피', '힙합']
+2026-02-07 19:08:39,870 - __main__ - INFO - 기본 설정을 사용합니다
+2026-02-07 19:08:39,875 - __main__ - INFO - CUDA 사용 가능: NVIDIA GeForce GTX 1660 SUPER
+2026-02-07 19:08:39,875 - __main__ - INFO - CUDA 메모리: 6.4 GB
+2026-02-07 19:08:39,875 - __main__ - INFO - 패션 인코더 시스템이 초기화되었습니다
+2026-02-07 19:08:39,875 - __main__ - INFO - 장치: cuda
+2026-02-07 19:08:39,875 - __main__ - INFO - 설정: TrainingConfig(batch_size=64, learning_rate=0.0001, temperature=0.1, embedding_dim=128, hidden_dim=256, output_dim=512, dropout_rate=0.1, weight_decay=1e-05, max_epochs=100, target_categories=['레트로', '로맨틱', '리조트'], image_size=224, crop_padding=0.1)
+2026-02-07 19:08:39,876 - __main__ - INFO - 데이터셋으로 데이터 모듈을 설정합니다: D:/K-Fashion/Training/라벨링데이터
+2026-02-07 19:08:39,878 - __main__ - INFO - 폴더에서 감지된 카테고리 (23개): ['레트로', '로맨틱', '리조트', '매니시', '모던', '밀리터리', '섹시', '소피스트케이티드', '스트리트', '스포티', '아방가르드', '오리엔탈', '웨스턴', '젠더리스', '컨트리', '클래식', '키치', '톰보이', '펑크', '페미닌', '프레피', '히피', '힙합']
+2026-02-07 19:08:39,878 - __main__ - INFO - 사용할 target_categories: ['레트로', '로맨틱', '리조트', '매니시', '모던', '밀리터리', '섹시', '소피스트케이티드', '스트리트', '스포티', '아방가르드', '오리엔탈', '웨스턴', '젠더리스', '컨트리', '클래식', '키치', '톰보이', '펑크', '페미닌', '프레피', '히피', '힙합']
+2026-02-07 19:09:37,367 - __main__ - INFO - 기본 설정을 사용합니다
+2026-02-07 19:09:37,371 - __main__ - INFO - CUDA 사용 가능: NVIDIA GeForce GTX 1660 SUPER
+2026-02-07 19:09:37,371 - __main__ - INFO - CUDA 메모리: 6.4 GB
+2026-02-07 19:09:37,372 - __main__ - INFO - 패션 인코더 시스템이 초기화되었습니다
+2026-02-07 19:09:37,372 - __main__ - INFO - 장치: cuda
+2026-02-07 19:09:37,372 - __main__ - INFO - 설정: TrainingConfig(batch_size=64, learning_rate=0.0001, temperature=0.1, embedding_dim=128, hidden_dim=256, output_dim=512, dropout_rate=0.1, weight_decay=1e-05, max_epochs=100, target_categories=['레트로', '로맨틱', '리조트'], image_size=224, crop_padding=0.1)
+2026-02-07 19:09:37,372 - __main__ - INFO - 데이터셋으로 데이터 모듈을 설정합니다: D:/K-Fashion/Training/라벨링데이터
+2026-02-07 19:09:37,374 - __main__ - INFO - 폴더에서 감지된 카테고리 (23개): ['레트로', '로맨틱', '리조트', '매니시', '모던', '밀리터리', '섹시', '소피스트케이티드', '스트리트', '스포티', '아방가르드', '오리엔탈', '웨스턴', '젠더리스', '컨트리', '클래식', '키치', '톰보이', '펑크', '페미닌', '프레피', '히피', '힙합']
+2026-02-07 19:09:37,374 - __main__ - INFO - 사용할 target_categories: ['레트로', '로맨틱', '리조트', '매니시', '모던', '밀리터리', '섹시', '소피스트케이티드', '스트리트', '스포티', '아방가르드', '오리엔탈', '웨스턴', '젠더리스', '컨트리', '클래식', '키치', '톰보이', '펑크', '페미닌', '프레피', '히피', '힙합']
+2026-02-07 19:20:28,332 - __main__ - INFO - 기본 설정을 사용합니다
+2026-02-07 19:20:28,340 - __main__ - INFO - CUDA 사용 가능: NVIDIA GeForce GTX 1660 SUPER
+2026-02-07 19:20:28,340 - __main__ - INFO - CUDA 메모리: 6.4 GB
+2026-02-07 19:20:28,340 - __main__ - INFO - 패션 인코더 시스템이 초기화되었습니다
+2026-02-07 19:20:28,340 - __main__ - INFO - 장치: cuda
+2026-02-07 19:20:28,340 - __main__ - INFO - 설정: TrainingConfig(batch_size=64, learning_rate=0.0001, temperature=0.1, embedding_dim=128, hidden_dim=256, output_dim=512, dropout_rate=0.1, weight_decay=1e-05, max_epochs=100, target_categories=['레트로', '로맨틱', '리조트'], image_size=224, crop_padding=0.1)
+2026-02-07 19:20:28,341 - __main__ - INFO - 데이터셋으로 데이터 모듈을 설정합니다: D:/K-Fashion/Training/라벨링데이터
+2026-02-07 19:20:28,343 - __main__ - INFO - 폴더에서 감지된 카테고리 (23개): ['레트로', '로맨틱', '리조트', '매니시', '모던', '밀리터리', '섹시', '소피스트케이티드', '스트리트', '스포티', '아방가르드', '오리엔탈', '웨스턴', '젠더리스', '컨트리', '클래식', '키치', '톰보이', '펑크', '페미닌', '프레피', '히피', '힙합']
+2026-02-07 19:20:28,345 - __main__ - INFO - 사용할 target_categories: ['레트로', '로맨틱', '리조트', '매니시', '모던', '밀리터리', '섹시', '소피스트케이티드', '스트리트', '스포티', '아방가르드', '오리엔탈', '웨스턴', '젠더리스', '컨트리', '클래식', '키치', '톰보이', '펑크', '페미닌', '프레피', '히피', '힙합']
+2026-02-07 19:25:17,090 - __main__ - INFO - 데이터 설정이 성공적으로 완료되었습니다
+2026-02-07 19:25:17,090 - __main__ - INFO - 학습 샘플: 770724
+2026-02-07 19:25:17,090 - __main__ - INFO - 검증 샘플: 192682
+2026-02-07 19:25:17,090 - __main__ - INFO - 어휘 크기: {'category': 24, 'style': 24, 'silhouette': 8, 'material': 26, 'detail': 41}
+2026-02-07 19:25:17,091 - __main__ - INFO - 트레이너를 설정합니다
+2026-02-07 19:25:17,091 - __main__ - INFO - 체크포인트 디렉토리: checkpoints
+2026-02-07 19:25:17,091 - __main__ - INFO - 로그 디렉토리: logs
+2026-02-07 19:25:17,821 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/patrickjohncyh/fashion-clip/resolve/main/config.json "HTTP/1.1 307 Temporary Redirect"
+2026-02-07 19:25:17,832 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/api/resolve-cache/models/patrickjohncyh/fashion-clip/7e3ba62ce16b379a1ab479346b66f192e76f51b7/config.json "HTTP/1.1 200 OK"
+2026-02-07 19:25:18,040 - httpx - INFO - HTTP Request: HEAD https://huggingface.co/patrickjohncyh/fashion-clip/resolve/main/model.safetensors "HTTP/1.1 302 Found"
+2026-02-07 19:25:18,453 - __main__ - INFO - 트레이너 설정이 완료되었습니다
+2026-02-07 19:25:18,453 - __main__ - INFO - 완전한 학습 파이프라인을 시작합니다
+2026-02-07 19:25:18,453 - __main__ - INFO - 1단계: 독립 JSON 인코더 학습 (5 에포크)

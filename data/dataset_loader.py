@@ -52,6 +52,7 @@ class KFashionDatasetLoader:
         )
         
         # Cache for loaded data
+        self._file_paths: List[Tuple[Path, str]] = []  # (json_path, category) tuples
         self._fashion_items: List[FashionItem] = []
         self._vocabularies_built = False
         
@@ -95,13 +96,15 @@ class KFashionDatasetLoader:
         self._fashion_items = valid_items
         return valid_items
     
-    def load_dataset_by_category(self) -> List[FashionItem]:
+    def load_dataset_by_category(self) -> List[Tuple[Path, str]]:
         """
-        Load K-Fashion dataset from category-based folder structure.
-        Expected structure: C:/sample/라벨링데이터/{카테고리}/{파일번호}.json
+        Scan K-Fashion dataset and collect JSON file paths (LAZY LOADING).
+        Does NOT parse JSON files - only collects paths for lazy loading.
+        
+        Expected structure: D:/K-Fashion/Training/라벨링데이터/{카테고리}/{파일번호}.json
         
         Returns:
-            List of FashionItem objects with valid bounding boxes
+            List of (json_path, category) tuples
             
         Raises:
             FileNotFoundError: If dataset path or category folders don't exist
@@ -110,109 +113,89 @@ class KFashionDatasetLoader:
         if not self.dataset_path.exists():
             raise FileNotFoundError(f"Dataset path not found: {self.dataset_path}")
         
-        fashion_items = []
+        file_paths = []
         category_stats = {}
         
         print(f"Scanning dataset path: {self.dataset_path}")
         print(f"Target categories: {self.target_categories}")
         
-        # Process each target category
+        # Scan each target category - ONLY collect paths, NO parsing
         for category in self.target_categories:
             category_path = self.dataset_path / category
-            category_count = 0
             
             if not category_path.exists():
                 print(f"Warning: Category folder not found: {category_path}")
                 continue
             
-            print(f"Processing category: {category}")
+            print(f"Scanning category: {category}")
             
-            # Find all JSON files in category folder
+            # Find all JSON files in category folder - FAST
             json_files = list(category_path.glob("*.json"))
             print(f"Found {len(json_files)} JSON files in {category}")
             
+            # Store paths only - NO json.load() here!
             for json_file in json_files:
-                try:
-                    # Extract file number from filename (e.g., "268.json" -> "268")
-                    file_id = json_file.stem
-                    
-                    # Process the JSON file
-                    items = self._process_category_json_file(json_file, category)
-                    
-                    if items:
-                        fashion_items.extend(items)
-                        category_count += len(items)
-                        
-                except Exception as e:
-                    print(f"Warning: Failed to process {json_file}: {e}")
-                    continue
+                file_paths.append((json_file, category))
             
-            category_stats[category] = category_count
-            print(f"Loaded {category_count} items from {category}")
+            category_stats[category] = len(json_files)
         
-        # Filter items with valid bounding boxes
-        valid_items = [item for item in fashion_items if self._has_valid_bbox(item)]
-        
-        # Print loading statistics
-        total_items = len(valid_items)
-        print(f"\n=== Dataset Loading Summary ===")
-        print(f"Total items loaded: {total_items}")
+        # Print scanning statistics
+        total_files = len(file_paths)
+        print(f"\n=== Dataset Scan Summary ===")
+        print(f"Total JSON files found: {total_files}")
         print("Category distribution:")
         for category, count in category_stats.items():
-            print(f"  {category}: {count} items")
+            print(f"  {category}: {count} files")
         
-        if total_items == 0:
+        if total_files == 0:
             available_folders = [f.name for f in self.dataset_path.iterdir() if f.is_dir()]
             raise ValueError(
-                f"No valid fashion items found in {self.dataset_path}. "
+                f"No JSON files found in {self.dataset_path}. "
                 f"Available folders: {available_folders}. "
                 f"Expected categories: {self.target_categories}"
             )
         
-        self._fashion_items = valid_items
-        return valid_items
+        # Store file paths for lazy loading
+        self._file_paths = file_paths
+        return file_paths
     
-    def _process_category_json_file(self, 
-                                  json_file: Path, 
-                                  category: str) -> List[FashionItem]:
+    def parse_json_file(self, json_path: Path, category: str) -> Optional[FashionItem]:
         """
-        Process a single JSON file from category-based folder structure.
+        Parse a single JSON file and create FashionItem (LAZY - called on demand).
         
         Args:
-            json_file: Path to JSON annotation file
-            category: Category name (레트로, 로맨틱, 리조트)
+            json_path: Path to JSON file
+            category: Category name
             
         Returns:
-            List of FashionItem objects from this file
+            FashionItem or None if invalid
         """
-        with open(json_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-        
-        items = []
-        
-        # Handle different JSON structures (single item vs multiple items)
-        if isinstance(data, list):
-            annotations = data
-        elif 'annotations' in data:
-            annotations = data['annotations']
-        else:
-            # Single item format
-            annotations = [data]
-        
-        for annotation in annotations:
-            try:
-                # Override category with folder-based category
+        try:
+            with open(json_path, 'r', encoding='utf-8') as f:
+                data = json.load(f)
+            
+            # Handle different JSON structures
+            if isinstance(data, list):
+                annotations = data
+            elif 'annotations' in data:
+                annotations = data['annotations']
+            else:
+                annotations = [data]
+            
+            # Process first valid annotation
+            for annotation in annotations:
                 annotation['category'] = category
-                
-                # Create fashion item
-                item = self._create_fashion_item_from_category(annotation, json_file.parent, json_file.stem)
-                if item:
-                    items.append(item)
-            except Exception as e:
-                print(f"Warning: Failed to process annotation in {json_file}: {e}")
-                continue
-        
-        return items
+                item = self._create_fashion_item_from_category(
+                    annotation, json_path.parent, json_path.stem
+                )
+                if item and self._has_valid_bbox(item):
+                    return item
+            
+            return None
+            
+        except Exception as e:
+            # Silently skip invalid files
+            return None
     
     def _create_fashion_item_from_category(self, 
                                          annotation: Dict, 
@@ -242,7 +225,13 @@ class KFashionDatasetLoader:
         # For K-Fashion dataset, try JSON filename with .jpg extension
         simple_filename = f"{json_stem}.jpg"
         
+        # Get the base dataset path (parent of 라벨링데이터)
+        base_path = category_path.parent.parent  # D:/K-Fashion/Training
+        
         possible_paths = [
+            # In 원천데이터 folder (most likely location)
+            base_path / "원천데이터" / category_path.name / simple_filename,
+            base_path / "원천데이터" / category_path.name / image_filename,
             # Original filename in category folder
             category_path / image_filename,
             # Simple filename based on JSON name
@@ -255,10 +244,6 @@ class KFashionDatasetLoader:
             category_path.parent / "images" / simple_filename,
             category_path / "images" / image_filename,
             category_path / "images" / simple_filename,
-            # In 원천데이터 structure with original filename
-            Path("C:/sample/원천데이터/원천데이터_1") / category_path.name / image_filename,
-            # In 원천데이터 structure with simple filename
-            Path("C:/sample/원천데이터/원천데이터_1") / category_path.name / simple_filename,
         ]
         
         for path in possible_paths:
@@ -479,28 +464,24 @@ class KFashionDatasetLoader:
     
     def build_vocabularies(self) -> Dict[str, Dict[str, int]]:
         """
-        Build vocabularies from loaded fashion items.
+        Build vocabularies from file paths (samples subset for efficiency).
         
         Returns:
             Dictionary mapping field names to vocabularies
         """
-        if not self._fashion_items:
-            raise ValueError("No fashion items loaded. Call load_dataset() first.")
+        if not self._file_paths:
+            raise ValueError("No file paths loaded. Call load_dataset_by_category() first.")
         
-        # Create temporary JSON files for vocabulary building
-        json_data_list = []
-        for item in self._fashion_items:
-            json_data = {
-                'category': item.category,
-                'style': item.style,
-                'silhouette': item.silhouette,
-                'material': item.material,
-                'detail': item.detail
-            }
-            json_data_list.append(json_data)
+        print(f"\nBuilding vocabularies from {len(self._file_paths)} files...")
         
-        # Build vocabularies using the processor
-        vocabularies = {}
+        # Sample files for vocabulary building (max 10000 files for speed)
+        import random
+        sample_size = min(10000, len(self._file_paths))
+        sampled_paths = random.sample(self._file_paths, sample_size)
+        
+        print(f"Sampling {sample_size} files for vocabulary building...")
+        
+        # Collect tokens from sampled files
         field_tokens = {
             'category': set(),
             'style': set(),
@@ -509,35 +490,34 @@ class KFashionDatasetLoader:
             'detail': set()
         }
         
-        # Collect all unique tokens
-        for json_data in json_data_list:
-            # Only add non-empty values
-            category = json_data.get('category', '')
-            if category:
-                field_tokens['category'].add(category)
-                
-            silhouette = json_data.get('silhouette', '')
-            if silhouette:
-                field_tokens['silhouette'].add(silhouette)
-            
-            # Multi-categorical fields
-            for style in json_data.get('style', []):
-                if style:  # Only add non-empty styles
-                    field_tokens['style'].add(style)
-            for material in json_data.get('material', []):
-                if material:  # Only add non-empty materials
-                    field_tokens['material'].add(material)
-            for detail in json_data.get('detail', []):
-                if detail:  # Only add non-empty details
-                    field_tokens['detail'].add(detail)
+        valid_count = 0
+        for json_path, category in sampled_paths:
+            item = self.parse_json_file(json_path, category)
+            if item:
+                field_tokens['category'].add(item.category)
+                if item.silhouette:
+                    field_tokens['silhouette'].add(item.silhouette)
+                for s in item.style:
+                    if s:
+                        field_tokens['style'].add(s)
+                for m in item.material:
+                    if m:
+                        field_tokens['material'].add(m)
+                for d in item.detail:
+                    if d:
+                        field_tokens['detail'].add(d)
+                valid_count += 1
+        
+        print(f"Processed {valid_count} valid items for vocabulary")
         
         # Build vocabularies with <UNK> token
+        vocabularies = {}
         for field, tokens in field_tokens.items():
-            vocab = {'<UNK>': 0}  # OOV token at index 0
+            vocab = {'<UNK>': 0}
             for i, token in enumerate(sorted(tokens), 1):
-                # All tokens in the set should be non-empty now
                 vocab[token] = i
             vocabularies[field] = vocab
+            print(f"  {field}: {len(vocab)} tokens")
         
         self.processor.vocabularies = vocabularies
         self._vocabularies_built = True

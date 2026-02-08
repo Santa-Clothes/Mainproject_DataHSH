@@ -94,29 +94,17 @@ class FashionEncoderSystem:
     def setup_data(self, dataset_path: str, **kwargs) -> None:
         logger.info(f"데이터셋으로 데이터 모듈을 설정합니다: {dataset_path}")
         
-        # JSON 폴더 확인
-        annotations_dir = Path(dataset_path) / "annotations"
-        if not annotations_dir.exists():
-            logger.warning("JSON 디렉토리를 찾을 수 없습니다. 기본 target_categories 사용")
-            detected_categories = self.config.target_categories
+        # 데이터셋 경로에서 직접 폴더 읽기 (23개 카테고리)
+        dataset_path_obj = Path(dataset_path)
+        if dataset_path_obj.exists() and dataset_path_obj.is_dir():
+            # 폴더 이름을 카테고리로 사용
+            detected_categories = [d.name for d in dataset_path_obj.iterdir() if d.is_dir()]
+            logger.info(f"폴더에서 감지된 카테고리 ({len(detected_categories)}개): {detected_categories}")
         else:
-            # JSON 파일에서 스타일 읽기
-            detected_categories = set()
-            for json_file in annotations_dir.glob("*.json"):
-                with open(json_file, 'r', encoding='utf-8') as f:
-                    data = json.load(f)
-                    labels = data.get("라벨링", {})
-                    styles = labels.get("스타일", [])
-                    for style_entry in styles:
-                        style_name = style_entry.get("스타일")
-                        if style_name:
-                            detected_categories.add(style_name)
-            detected_categories = list(detected_categories)
-            if len(detected_categories) == 0:
-                logger.warning("스타일 정보가 JSON에서 발견되지 않았습니다. 기본 target_categories 사용")
-                detected_categories = self.config.target_categories
+            logger.warning(f"데이터셋 경로를 찾을 수 없습니다: {dataset_path}. 기본 target_categories 사용")
+            detected_categories = self.config.target_categories
 
-        logger.info(f"자동 감지된 target_categories: {detected_categories}")
+        logger.info(f"사용할 target_categories: {detected_categories}")
         
         # data_module 생성
         data_config = {
