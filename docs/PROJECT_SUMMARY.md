@@ -77,11 +77,15 @@ fashion-json-encoder/
 ├── 📂 training/
 │   └── trainer.py                   # FashionTrainer (핵심)
 │
-├── 📂 scripts/training/
-│   ├── create_baseline_v3_fashionclip.py
-│   ├── create_baseline_v4_finetuned.py
-│   ├── create_baseline_v5_augmented.py  ← 최신
-│   └── create_baseline_v5_seed_validation.py
+├── 📂 scripts/
+│   ├── train.py                     # 간단한 학습 스크립트
+│   ├── main.py                      # 메인 시스템
+│   ├── start_api_server.py          # API 서버
+│   └── training/
+│       ├── create_baseline_v3_fashionclip.py
+│       ├── create_baseline_v4_finetuned.py
+│       ├── create_baseline_v5_augmented.py  ← 최신
+│       └── create_baseline_v5_seed_validation.py
 │
 ├── 📂 checkpoints/
 │   └── baseline_v5_best_model.pt    ← 프로덕션 배포용
@@ -91,9 +95,13 @@ fashion-json-encoder/
 │   ├── v3_vs_v5_comparison.json     ← 버전 비교
 │   └── v5_seed_validation_report.md ← 재현성 검증
 │
-├── README.md                        ← 프로젝트 메인 문서
-├── CODE_QUALITY_IMPROVEMENTS.md     ← 코드 품질 개선
-└── PROJECT_SUMMARY.md               ← 이 파일
+├── 📂 docs/
+│   ├── CHANGELOG.md                 ← 변경 이력
+│   ├── PROJECT_SUMMARY.md           ← 이 파일
+│   ├── CODE_QUALITY_IMPROVEMENTS.md ← 코드 품질
+│   └── CLEANUP_COMPLETE.md          ← 정리 완료
+│
+└── README.md                        ← 프로젝트 메인 문서
 ```
 
 ---
@@ -166,7 +174,7 @@ scheduler = CosineAnnealingLR
    - v3 우수성 확인
 
 ### 코드 품질
-- **코드 품질 개선** (`CODE_QUALITY_IMPROVEMENTS.md`)
+- **코드 품질 개선** (`docs/CODE_QUALITY_IMPROVEMENTS.md`)
   - 랜덤 셔플 추가
   - drop_last 수정
   - 인코딩 문제 해결
@@ -286,8 +294,8 @@ results/v5_seed_validation_report.md
 
 # 문서
 README.md
-CODE_QUALITY_IMPROVEMENTS.md
-PROJECT_SUMMARY.md (이 파일)
+docs/CODE_QUALITY_IMPROVEMENTS.md
+docs/PROJECT_SUMMARY.md (이 파일)
 ```
 
 ### 데이터 경로
@@ -315,6 +323,6 @@ C:/sample/라벨링데이터/
 
 ---
 
-**Last Updated**: 2026-02-06  
+**Last Updated**: 2026-02-10  
 **Version**: v5 (Production Ready)  
 **Status**: ✅ 배포 준비 완료

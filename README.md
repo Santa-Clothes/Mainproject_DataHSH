@@ -58,6 +58,9 @@ pip install -r requirements.txt
 # v5 학습 (Data Augmentation + Class Balancing)
 python scripts/training/create_baseline_v5_augmented.py
 
+# 간단한 학습 스크립트 사용
+python scripts/train.py --dataset_path C:/sample/라벨링데이터
+
 # 데이터 경로 수정이 필요한 경우
 # scripts/training/create_baseline_v5_augmented.py 파일에서
 # dataset_path = "C:/sample/라벨링데이터" 수정
@@ -130,10 +133,20 @@ fashion-json-encoder/
 ├── 📂 docs/                      # 문서
 ├── 📂 .kiro/specs/               # 프로젝트 명세
 │
+├── 📂 docs/                      # 문서
+│   ├── CHANGELOG.md              # 변경 이력
+│   ├── PROJECT_SUMMARY.md        # 프로젝트 요약
+│   ├── CODE_QUALITY_IMPROVEMENTS.md
+│   └── CLEANUP_COMPLETE.md
+│
+├── 📂 scripts/                   # 실행 스크립트
+│   ├── train.py                  # 간단한 학습 스크립트
+│   ├── main.py                   # 메인 시스템
+│   └── start_api_server.py       # API 서버
+│
 ├── README.md                     # 이 파일
 ├── requirements.txt              # 의존성
-├── CODE_QUALITY_IMPROVEMENTS.md  # 코드 품질 개선 문서
-└── train.py                      # 간단한 학습 스크립트
+└── setup.py                      # 설치 스크립트
 ```
 
 ---
@@ -332,8 +345,11 @@ python -m pytest tests/test_contrastive_learner.py -v
 - [Seed 검증 리포트](results/v5_seed_validation_report.md) - 재현성 검증
 - [v3 vs v4 분석](results/baseline_v3_vs_v4_analysis.md) - Fine-tuning 실패 분석
 
-### 코드 품질
-- [코드 품질 개선](CODE_QUALITY_IMPROVEMENTS.md) - 개선 사항 문서
+### 프로젝트 문서
+- [프로젝트 요약](docs/PROJECT_SUMMARY.md) - 전체 요약
+- [변경 이력](docs/CHANGELOG.md) - 버전 히스토리
+- [코드 품질 개선](docs/CODE_QUALITY_IMPROVEMENTS.md) - 개선 사항
+- [정리 완료](docs/CLEANUP_COMPLETE.md) - 프로젝트 정리
 
 ### 프로젝트 명세
 - [요구사항](.kiro/specs/fashion-json-encoder/requirements.md)
@@ -426,4 +442,4 @@ MIT License - 자유롭게 사용, 수정, 배포 가능
 
 **Made with ❤️ for Fashion AI**
 
-*Last Updated: 2026-02-06*
+*Last Updated: 2026-02-10*

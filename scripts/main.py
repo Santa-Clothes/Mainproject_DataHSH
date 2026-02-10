@@ -6,10 +6,10 @@
 패션 JSON 인코더 시스템의 메인 진입점을 제공합니다.
 
 사용법:
-    python main.py --help                          # 도움말 표시
-    python main.py train --dataset_path /path/to/data  # 모델 학습
-    python main.py evaluate --checkpoint_path /path/to/checkpoint  # 모델 평가
-    python main.py sanity_check                    # 정상성 검사 실행
+    python scripts/main.py --help                          # 도움말 표시
+    python scripts/main.py train --dataset_path /path/to/data  # 모델 학습
+    python scripts/main.py evaluate --checkpoint_path /path/to/checkpoint  # 모델 평가
+    python scripts/main.py sanity_check                    # 정상성 검사 실행
 """
 
 import argparse
@@ -18,6 +18,10 @@ import json
 import logging
 from pathlib import Path
 from typing import Dict, Any, Optional
+
+# 프로젝트 루트를 Python 경로에 추가
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
 
 import torch
 
@@ -387,12 +391,12 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 예시:
-  python main.py train --dataset_path /path/to/kfashion
-  python main.py train --dataset_path /path/to/kfashion --config config.json
-  python main.py evaluate --checkpoint_path checkpoints/best_model.pt
-  python main.py sanity_check
-  python main.py sanity_check --dataset_path /path/to/kfashion
-  python main.py create_config --output config.json
+  python scripts/main.py train --dataset_path /path/to/kfashion
+  python scripts/main.py train --dataset_path /path/to/kfashion --config config.json
+  python scripts/main.py evaluate --checkpoint_path checkpoints/best_model.pt
+  python scripts/main.py sanity_check
+  python scripts/main.py sanity_check --dataset_path /path/to/kfashion
+  python scripts/main.py create_config --output config.json
         """
     )
     

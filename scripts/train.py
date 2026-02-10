@@ -6,9 +6,9 @@
 쉬운 인터페이스를 제공하는 간소화된 학습 스크립트입니다.
 
 사용법:
-    python train.py --dataset_path /path/to/kfashion
-    python train.py --dataset_path /path/to/kfashion --epochs 50 --batch_size 64
-    python train.py --dataset_path /path/to/kfashion --config my_config.json
+    python scripts/train.py --dataset_path /path/to/kfashion
+    python scripts/train.py --dataset_path /path/to/kfashion --epochs 50 --batch_size 64
+    python scripts/train.py --dataset_path /path/to/kfashion --config my_config.json
 """
 
 import argparse
@@ -16,8 +16,12 @@ import sys
 import json
 from pathlib import Path
 
+# 프로젝트 루트를 Python 경로에 추가
+project_root = Path(__file__).parent.parent
+sys.path.insert(0, str(project_root))
+
 # 메인 시스템 가져오기
-from main import FashionEncoderSystem, create_config_file
+from scripts.main import FashionEncoderSystem, create_config_file
 
 
 def main():
@@ -27,11 +31,11 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 예시:
-  python train.py --dataset_path /path/to/kfashion
-  python train.py --dataset_path /path/to/kfashion --epochs 50
-  python train.py --dataset_path /path/to/kfashion --batch_size 32 --lr 0.001
-  python train.py --dataset_path /path/to/kfashion --config config.json
-  python train.py --sanity_check  # 합성 데이터로 정상성 검사 실행
+  python scripts/train.py --dataset_path /path/to/kfashion
+  python scripts/train.py --dataset_path /path/to/kfashion --epochs 50
+  python scripts/train.py --dataset_path /path/to/kfashion --batch_size 32 --lr 0.001
+  python scripts/train.py --dataset_path /path/to/kfashion --config config.json
+  python scripts/train.py --sanity_check  # 합성 데이터로 정상성 검사 실행
         """
     )
     
