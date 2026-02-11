@@ -9,7 +9,4 @@ This module provides the training pipeline implementation including:
 
 from .trainer import FashionTrainer, create_trainer_from_data_module
 
-__all__ = [
-    'FashionTrainer',
-    'create_trainer_from_data_module'
-]
+__all__ = ["FashionTrainer", "create_trainer_from_data_module"]

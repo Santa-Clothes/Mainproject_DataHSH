@@ -4,7 +4,7 @@ Fashion JSON Encoder Models Package
 This package contains the core neural network models for the Fashion JSON Encoder system.
 """
 
-from .json_encoder import JSONEncoder
 from .contrastive_learner import ContrastiveLearner
+from .json_encoder import JSONEncoder
 
-__all__ = ['JSONEncoder', 'ContrastiveLearner']
+__all__ = ["JSONEncoder", "ContrastiveLearner"]

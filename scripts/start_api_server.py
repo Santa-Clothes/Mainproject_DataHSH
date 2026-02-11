@@ -4,6 +4,7 @@ Fashion JSON Encoder API Server
 간단한 API 서버 시작 스크립트
 """
 
+import os
 import uvicorn
 import sys
 from pathlib import Path
@@ -14,16 +15,24 @@ sys.path.insert(0, str(project_root))
 
 def main():
     """FastAPI 서버 시작"""
+    # 환경 변수로 설정 가능
+    host = os.getenv("API_HOST", "0.0.0.0")
+    port = int(os.getenv("API_PORT", "8000"))
+    reload = os.getenv("API_RELOAD", "true").lower() == "true"
+
     print("🚀 Fashion JSON Encoder API 서버 시작")
-    print("📍 http://localhost:8000")
-    print("📖 API 문서: http://localhost:8000/docs")
-    
+    print(f"📍 http://localhost:{port}")
+    print(f"📖 API 문서: http://localhost:{port}/docs")
+    print(f"⚙️  Reload: {reload}")
+
     uvicorn.run(
         "api.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True,
-        log_level="info"
+        host=host,
+        port=port,
+        reload=reload,
+        log_level="info",
+        access_log=True,
+        timeout_keep_alive=30,
     )
 
 if __name__ == "__main__":

@@ -12,9 +12,11 @@ Pillow>=10.0.0
 numpy>=1.24.0
 pandas>=2.0.0
 
-# Visualization (minimal version)
+# Visualization
 matplotlib>=3.7.0
+seaborn>=0.13.0  # Enhanced charts with modern styling
 tqdm>=4.66.0
+rich>=13.7.0  # Beautiful terminal UI and progress display
 
 # Monitoring and logging (분산 학습 지원)
 tensorboard>=2.14.0
