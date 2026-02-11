@@ -12,8 +12,8 @@ import os
 from pathlib import Path
 from PIL import Image
 
-from data.dataset_loader import KFashionDatasetLoader
-from data.data_models import FashionItem
+from src.data.dataset_loader import KFashionDatasetLoader
+from src.data.data_models import FashionItem
 
 
 class TestKFashionIntegration:

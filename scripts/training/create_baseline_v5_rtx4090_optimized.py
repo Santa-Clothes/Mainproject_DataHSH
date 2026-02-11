@@ -24,7 +24,7 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(project_root))
 
-from data.fashion_dataset import FashionDataModule, create_augmented_transforms, create_validation_transforms
+from src.data.fashion_dataset import FashionDataModule, create_augmented_transforms, create_validation_transforms
 from training.trainer import FashionTrainer
 from utils.config import TrainingConfig, DataConfig, ALL_CATEGORIES
 from torchvision import transforms
@@ -136,7 +136,7 @@ def create_enhanced_augmented_transforms(image_size: int = 224) -> transforms.Co
 def create_rtx4090_dataloader(dataset, batch_size, shuffle=True, num_workers=8):
     """RTX 4090 최적화 DataLoader"""
     from torch.utils.data import DataLoader
-    from data.fashion_dataset import collate_fashion_batch
+    from src.data.fashion_dataset import collate_fashion_batch
     
     return DataLoader(
         dataset=dataset,

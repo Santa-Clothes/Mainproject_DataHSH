@@ -19,7 +19,7 @@ sys.path.append(str(project_root))
 
 from training.trainer import FashionTrainer
 from utils.config import TrainingConfig, TestConfig
-from data.data_models import ProcessedBatch
+from src.data.data_models import ProcessedBatch
 
 
 class TestFashionTrainer(unittest.TestCase):

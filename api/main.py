@@ -21,7 +21,7 @@ from pydantic import BaseModel, Field
 from torchvision import transforms
 from transformers import CLIPVisionModel
 
-from data.fashion_dataset import KFashionDatasetLoader
+from src.data.dataset_loader import KFashionDatasetLoader
 from models.contrastive_learner import ContrastiveLearner
 
 # 로컬 모듈 임포트

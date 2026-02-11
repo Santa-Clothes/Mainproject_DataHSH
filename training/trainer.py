@@ -16,7 +16,7 @@ import torch.optim as optim
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
 
-from data.fashion_dataset import FashionDataModule, ProcessedBatch
+from src.data.fashion_dataset import FashionDataModule, ProcessedBatch
 from models.contrastive_learner import ContrastiveLearner
 from models.json_encoder import JSONEncoder
 from utils.config import TrainingConfig

@@ -13,9 +13,9 @@ from pathlib import Path
 from PIL import Image
 import numpy as np
 
-from data.processor import FashionDataProcessor
-from data.dataset_loader import KFashionDatasetLoader
-from data.data_models import FashionItem
+from src.data.processor import FashionDataProcessor
+from src.data.dataset_loader import KFashionDatasetLoader
+from src.data.data_models import FashionItem
 
 
 class TestFashionDataProcessor:

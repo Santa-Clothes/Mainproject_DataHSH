@@ -24,7 +24,7 @@ except ImportError:
     subprocess.check_call(["pip", "install", "umap-learn"])
     import umap
 
-from data.fashion_dataset import FashionDataModule
+from src.data.fashion_dataset import FashionDataModule
 from models.contrastive_learner import ContrastiveLearner
 from utils.config import TrainingConfig
 

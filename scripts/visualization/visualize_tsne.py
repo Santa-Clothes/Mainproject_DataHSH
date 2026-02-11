@@ -5,7 +5,7 @@ from sklearn.manifold import TSNE
 from tqdm import tqdm
 from pathlib import Path
 from training.trainer import FashionTrainer
-from data.fashion_dataset import FashionDataModule, collate_fashion_batch
+from src.data.fashion_dataset import FashionDataModule, collate_fashion_batch
 from utils.config import TrainingConfig
 
 def extract_embeddings(trainer, data_loader, device, max_samples=2000):

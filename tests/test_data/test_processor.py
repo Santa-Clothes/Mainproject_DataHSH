@@ -2,7 +2,7 @@
 
 import pytest
 
-from data.processor import FashionMetadataProcessor
+from src.data.processor import FashionMetadataProcessor
 
 
 class TestFashionMetadataProcessor:

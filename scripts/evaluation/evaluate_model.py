@@ -3,7 +3,7 @@ import numpy as np
 from tqdm import tqdm
 from pathlib import Path
 from training.trainer import FashionTrainer
-from data.fashion_dataset import FashionDataModule, collate_fashion_batch
+from src.data.fashion_dataset import FashionDataModule, collate_fashion_batch
 from utils.config import TrainingConfig
 
 def calculate_metrics(trainer, val_loader, device):
