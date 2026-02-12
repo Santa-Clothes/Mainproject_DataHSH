@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Docs
+*.md
+docs/
+
+# Results (생성되는 파일들)
+results/evaluation/
+results/visualizations/
+logs/
+
+# 환경변수 (보안)
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Large files (Docker 이미지 크기 최소화)
+*.tar.gz
+*.zip
+
+# Data directories (대용량 - 배포 시 불필요)
+data/csv/
+data/images/
+archive/
+checkpoints/
+tests/
+scripts/
+
+# FAISS indexes - 필요한 index는 포함
+# *.index 제외하여 naver.index는 Docker에 포함됨
+
+# Training results
+results/
