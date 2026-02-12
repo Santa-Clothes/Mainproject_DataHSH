@@ -12,6 +12,25 @@ Pillow>=10.0.0
 numpy>=1.24.0
 pandas>=2.0.0
 
+# Vector search
+faiss-cpu>=1.7.4  # CPU version (use faiss-gpu for GPU support)
+
+# Configuration
+python-dotenv>=1.0.0
+
+# Database
+supabase>=2.0.0  # Supabase client for product data
+
+# Cloud Storage
+google-cloud-storage>=2.10.0  # Google Cloud Storage for FAISS index
+
+# Web Framework (FastAPI)
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+pydantic>=2.0.0
+python-multipart>=0.0.6  # For file upload support
+requests>=2.31.0  # HTTP library for downloading images
+
 # Visualization
 matplotlib>=3.7.0
 seaborn>=0.13.0  # Enhanced charts with modern styling

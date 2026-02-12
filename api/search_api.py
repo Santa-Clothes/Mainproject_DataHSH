@@ -9,20 +9,31 @@ FastAPI 기반 REST API
 import sys
 from pathlib import Path
 from typing import Dict, List, Optional
+import time
+import uuid
+from datetime import datetime
 
 import numpy as np
-from fastapi import FastAPI, HTTPException, Query
+from io import BytesIO
+from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
+from PIL import Image
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from api.search_pipeline import SearchPipeline
+from utils.config import get_system_config
+
+# 시스템 설정 로드
+config = get_system_config()
 
 # FastAPI 앱 생성
 app = FastAPI(
     title="Fashion Search API",
     description="Nine Oz → K-Fashion → Naver Shopping 검색 시스템",
-    version="1.0.0",
+    version="2.0.0",  # Updated with real embedding support
 )
 
 # CORS 설정
@@ -33,6 +44,11 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# 정적 파일 서빙 (static 폴더)
+static_dir = Path(__file__).parent.parent / "static"
+if static_dir.exists():
+    app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
 
 # 전역 파이프라인 인스턴스
 pipeline: Optional[SearchPipeline] = None
@@ -82,27 +98,81 @@ async def startup_event():
     """API 시작 시 파이프라인 초기화"""
     global pipeline
 
-    print("Initializing search pipeline...")
-    pipeline = SearchPipeline(
-        nineoz_csv_path="c:/Work/hwangseonghun/nineoz_with_kfashion_categories.csv",
-        naver_csv_path="c:/Work/hwangseonghun/naver_with_kfashion_categories.csv",
-        model=None,  # 나중에 모델 로드
-    )
-    print("Pipeline initialized successfully!")
+    print("\n" + "="*80)
+    print("Initializing Fashion Search API")
+    print("="*80)
+    print(f"Data Source: {config.data_source}")
+    if config.data_source == "supabase":
+        print(f"Supabase URL: {config.supabase_url}")
+        print(f"Nine Oz Table: {config.nineoz_table}")
+        print(f"Naver Table: {config.naver_table}")
+    else:
+        print(f"Nine Oz CSV: {config.nineoz_csv_path}")
+        print(f"Naver CSV: {config.naver_csv_path}")
+    print(f"Checkpoint: {config.checkpoint_path}")
+    print(f"Device: {config.device or 'auto'}")
+    print(f"Use FAISS: {config.use_faiss}")
+    if config.use_faiss:
+        print(f"FAISS Index: {config.faiss_index_path}")
+    print(f"Precompute embeddings: {config.precompute_embeddings}")
+    print("="*80)
+
+    try:
+        pipeline = SearchPipeline(
+            nineoz_csv_path=config.nineoz_csv_path,
+            naver_csv_path=config.naver_csv_path,
+            checkpoint_path=config.checkpoint_path,
+            device=config.device,
+            precompute_embeddings=config.precompute_embeddings,
+            faiss_index_path=config.faiss_index_path if config.use_faiss else None,
+            use_faiss=config.use_faiss,
+            data_source=config.data_source,
+            supabase_url=config.supabase_url,
+            supabase_key=config.supabase_key,
+            nineoz_table=config.nineoz_table,
+            naver_table=config.naver_table,
+        )
+        print("\n[OK] Pipeline initialized successfully!")
+    except Exception as e:
+        print(f"\n[WARNING] Pipeline initialization failed: {e}")
+        print("[INFO] API will start in limited mode (health check only)")
+        pipeline = None
+
+    print("="*80)
 
 
-@app.get("/", response_model=Dict)
+@app.get("/")
 async def root():
-    """루트 엔드포인트"""
+    """루트 엔드포인트 - 웹 UI 제공"""
+    html_path = Path(__file__).parent.parent / "static" / "search.html"
+    if html_path.exists():
+        return FileResponse(html_path)
+    else:
+        return {
+            "message": "Fashion Search API",
+            "version": "2.0.0",
+            "endpoints": {
+                "health": "/health",
+                "search": "/search",
+                "search_upload": "/search/upload",
+                "query_item": "/query/{index}",
+                "docs": "/docs",
+            },
+        }
+
+
+@app.get("/api")
+async def api_info():
+    """API 정보"""
     return {
         "message": "Fashion Search API",
-        "version": "1.0.0",
+        "version": "2.0.0",
         "endpoints": {
             "health": "/health",
             "search": "/search",
+            "search_upload": "/search/upload",
             "query_item": "/query/{index}",
-            "categories": "/categories",
-            "stats": "/stats",
+            "docs": "/docs",
         },
     }
 
@@ -111,11 +181,16 @@ async def root():
 async def health_check():
     """헬스체크"""
     if pipeline is None:
-        raise HTTPException(status_code=503, detail="Pipeline not initialized")
+        return HealthResponse(
+            status="limited",
+            model_loaded=False,
+            nineoz_count=0,
+            naver_count=0,
+        )
 
     return HealthResponse(
         status="healthy",
-        model_loaded=pipeline.model is not None,
+        model_loaded=pipeline.embedding_generator is not None,
         nineoz_count=len(pipeline.nineoz_df),
         naver_count=len(pipeline.naver_df),
     )
@@ -211,6 +286,113 @@ async def search_get(
         query_index=query_index, initial_k=initial_k, final_k=final_k
     )
     return await search(request)
+
+
+@app.post("/search/upload")
+async def search_by_upload(
+    file: UploadFile = File(..., description="이미지 파일 (JPG, PNG)"),
+    category_filter: Optional[str] = Query(None, description="카테고리 필터 (optional)"),
+    top_k: int = Query(10, description="반환할 결과 수", ge=1, le=100),
+):
+    """
+    이미지 파일 업로드로 검색
+
+    Args:
+        file: 업로드된 이미지 파일
+        category_filter: K-Fashion 카테고리 필터 (선택사항)
+        top_k: 반환할 결과 수
+
+    Returns:
+        검색 결과 리스트
+    """
+    if pipeline is None:
+        raise HTTPException(status_code=503, detail="Pipeline not initialized")
+
+    # 이미지 파일 타입 검증
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail=f"Invalid file type: {file.content_type}. Must be an image."
+        )
+
+    try:
+        # 전체 시간 측정 시작
+        total_start = time.time()
+
+        # 쿼리 ID 생성
+        query_id = str(uuid.uuid4())
+
+        # 이미지 파일 읽기
+        contents = await file.read()
+        image = Image.open(BytesIO(contents))
+
+        # RGB로 변환 (RGBA, Grayscale 등 처리)
+        if image.mode != "RGB":
+            image = image.convert("RGB")
+
+        # 검색 수행 (시간 측정)
+        search_start = time.time()
+        results = pipeline.search_by_image(
+            image_source=image,
+            category_filter=category_filter,
+            initial_k=100,
+            final_k=top_k
+        )
+        search_time = time.time() - search_start
+
+        # 전체 시간
+        total_time = time.time() - total_start
+
+        # 결과 통계 계산
+        scores = [r['score'] for r in results] if results else []
+        avg_score = np.mean(scores) if scores else 0.0
+        max_score = np.max(scores) if scores else 0.0
+        min_score = np.min(scores) if scores else 0.0
+
+        # 점수 분포 계산
+        score_distribution = {
+            "0.8-1.0": sum(1 for s in scores if s >= 0.8),
+            "0.6-0.8": sum(1 for s in scores if 0.6 <= s < 0.8),
+            "0.4-0.6": sum(1 for s in scores if 0.4 <= s < 0.6),
+            "0.0-0.4": sum(1 for s in scores if s < 0.4),
+        }
+
+        # 랭크 추가
+        for rank, result in enumerate(results, 1):
+            result['rank'] = rank
+
+        return {
+            "query": {
+                "query_id": query_id,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "image_info": {
+                    "filename": file.filename,
+                    "size": len(contents),
+                    "dimensions": f"{image.size[0]}x{image.size[1]}",
+                    "format": image.format or "Unknown"
+                }
+            },
+            "results": results,
+            "metrics": {
+                "total_results": len(results),
+                "search_time_ms": int(search_time * 1000),
+                "total_time_ms": int(total_time * 1000),
+                "category_filter": category_filter,
+                "faiss_enabled": pipeline.use_faiss
+            },
+            "stats": {
+                "avg_score": float(avg_score),
+                "max_score": float(max_score),
+                "min_score": float(min_score),
+                "score_distribution": score_distribution
+            }
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Failed to process image: {str(e)}"
+        )
 
 
 @app.get("/categories", response_model=Dict)

@@ -1,3 +1,8 @@
+# This file specifies files that are *not* uploaded to Google Cloud
+# using gcloud. It follows the same syntax as .gitignore, with the addition of
+# "#!include" directives (which insert the entries of the given .gitignore-style
+# file at that point).
+
 # Python
 __pycache__/
 *.py[cod]
@@ -44,7 +49,7 @@ env/
 .env
 .env.local
 
-# Model checkpoints and logs
+# Model checkpoints and logs (체크포인트는 제외, Docker에서 다운로드)
 checkpoints/
 logs/
 results/
@@ -58,11 +63,10 @@ mlruns/
 events.out.tfevents.*
 *.tfevents.*
 
-# Data
-data/
+# Data (대부분 제외, 필요한 것만 포함)
 data/csv/
+data/images/
 *.csv
-*.json
 *.parquet
 *.feather
 
@@ -78,6 +82,7 @@ Thumbs.db
 .coverage
 htmlcov/
 .tox/
+tests/
 
 # MyPy
 .mypy_cache/
@@ -100,13 +105,21 @@ emergency_tuning_results/
 # Archives
 archive/
 
-# FAISS Indexes
-*.index
-
 # Docker
 key.json
 *.pem
 
-# Integration examples (if sensitive)
-integration/spring-boot/application-secret.yml
-integration/nextjs/.env.local
+# Git
+.git/
+.gitignore
+
+# IMPORTANT: DO NOT exclude FAISS indexes!
+# We need data/indexes/*.index for deployment
+# *.index is excluded in .gitignore but NOT here
+
+# Exclude these directories/files from Cloud Build
+scripts/
+docs/
+README.md
+*.md
+python313_packages_backup.txt
