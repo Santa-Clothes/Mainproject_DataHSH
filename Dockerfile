@@ -43,4 +43,4 @@ ENV DEVICE=cpu \
     DATA_SOURCE=supabase
 
 # 서버 실행
-CMD ["python", "api/search_api.py"]
+CMD ["uvicorn", "api.search_api:app", "--host", "0.0.0.0", "--port", "8001"]
