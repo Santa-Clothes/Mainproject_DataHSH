@@ -2,7 +2,7 @@
 JSON과 이미지 임베딩을 정렬하는 대조 학습 시스템입니다.
 
 이 모듈은 대조 학습을 위해 JSON 인코더와 FashionCLIP/CLIP 이미지 인코더를
-결합하는 ContrastiveLearner 클래스를 구현합니다.
+결합하는 ContrastiveLearner 클래스를 구현합니다. 
 """
 
 from typing import Dict

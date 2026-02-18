@@ -91,7 +91,7 @@ def apply_tsne(
         n_components=n_components,
         perplexity=perplexity,
         random_state=random_state,
-        n_iter=1000,
+        max_iter=1000,
         verbose=1
     )
 

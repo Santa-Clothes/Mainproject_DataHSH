@@ -30,17 +30,13 @@ COPY data/indexes/ ./data/indexes/
 # 포트 노출
 EXPOSE 8001
 
-# 헬스체크
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD curl -f http://localhost:8001/health || exit 1
-
 # 환경변수 기본값
+# Note: Cloud Run has its own health check mechanism, so HEALTHCHECK is removed
 ENV DEVICE=cpu \
     USE_FAISS=true \
     FAISS_INDEX_PATH=data/indexes/naver.index \
-    API_PORT=8001 \
     LOG_LEVEL=INFO \
     DATA_SOURCE=supabase
 
-# 서버 실행
-CMD ["uvicorn", "api.search_api:app", "--host", "0.0.0.0", "--port", "8001"]
+# 서버 실행 (Cloud Run의 PORT 환경변수 사용, 기본값 8001)
+CMD sh -c "uvicorn api.search_api:app --host 0.0.0.0 --port ${PORT:-8001}"
