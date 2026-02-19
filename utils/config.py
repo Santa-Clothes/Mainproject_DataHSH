@@ -145,13 +145,13 @@ class SystemConfig:
     nineoz_csv_path: str = field(
         default_factory=lambda: os.getenv(
             "NINEOZ_CSV_PATH",
-            "c:/Work/hwangseonghun/nineoz_with_kfashion_categories.csv"
+            "data/csv/internal_products_rows.csv"
         )
     )
     naver_csv_path: str = field(
         default_factory=lambda: os.getenv(
             "NAVER_CSV_PATH",
-            "c:/Work/hwangseonghun/naver_with_kfashion_categories.csv"
+            "data/csv/naver_products_rows.csv"
         )
     )
 

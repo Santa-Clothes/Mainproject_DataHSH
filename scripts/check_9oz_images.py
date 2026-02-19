@@ -180,7 +180,7 @@ if __name__ == "__main__":
     if not Path(args.csv_path).exists():
         print(f"❌ CSV 파일을 찾을 수 없습니다: {args.csv_path}")
         print("\n사용 가능한 경로 예시:")
-        print("  - c:/Work/hwangseonghun/nineoz_with_kfashion_categories.csv")
+        print("  - data/csv/internal_products_rows.csv")
         print("  - ./data/nineoz_with_kfashion_categories.csv")
         sys.exit(1)
 

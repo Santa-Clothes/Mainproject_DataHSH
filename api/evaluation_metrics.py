@@ -311,8 +311,8 @@ if __name__ == "__main__":
 
     # 파이프라인 생성
     pipeline = SearchPipeline(
-        nineoz_csv_path="c:/Work/hwangseonghun/nineoz_with_kfashion_categories.csv",
-        naver_csv_path="c:/Work/hwangseonghun/naver_with_kfashion_categories.csv",
+        nineoz_csv_path="data/csv/internal_products_rows.csv",
+        naver_csv_path="data/csv/naver_products_rows.csv",
     )
 
     # 평가기 생성 (테스트 쿼리 10개)
@@ -326,5 +326,5 @@ if __name__ == "__main__":
     evaluator.print_summary()
 
     # 상세 결과 저장
-    results_df.to_csv("c:/Work/hwangseonghun/FinalProject_v2/results/search_evaluation.csv", index=False)
+    results_df.to_csv("results/evaluation/search_evaluation.csv", index=False)
     print("\nDetailed results saved to results/search_evaluation.csv")
