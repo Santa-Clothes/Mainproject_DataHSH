@@ -1,23 +1,28 @@
 package com.yourproject.controller;
 
-import com.yourproject.service.FashionSearchService;
-import com.yourproject.service.FashionSearchService.FashionSearchResponse;
-import com.yourproject.service.FashionSearchService.HealthResponse;
+import com.yourproject.service.EmbeddingApiService;
+import com.yourproject.service.NaverProductService;
+import com.yourproject.service.NaverProductService.NaverProduct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.util.List;
 
 /**
  * Fashion Search Controller
  * ==========================
  *
- * Spring Boot에서 바로 사용할 수 있는 Fashion Search API 컨트롤러
+ * 전체 흐름:
+ *   1. 프론트에서 이미지 받기
+ *   2. FastAPI에 임베딩 요청 (EmbeddingApiService)
+ *   3. 임베딩으로 Supabase 유사 상품 검색 (NaverProductService)
+ *   4. 결과 반환
  *
  * 엔드포인트:
- * - POST /api/fashion/search/upload - 이미지 업로드 검색
- * - GET /api/fashion/health - API 헬스 체크
+ *   POST /api/fashion/search  — 이미지 검색
+ *   GET  /api/fashion/health  — 상태 확인
  */
 @RestController
 @RequestMapping("/api/fashion")
@@ -25,64 +30,62 @@ import org.springframework.web.multipart.MultipartFile;
 @CrossOrigin(origins = "*") // 프로덕션에서는 구체적으로 지정
 public class FashionSearchController {
 
-    @Autowired
-    private FashionSearchService fashionSearchService;
+    private final EmbeddingApiService embeddingApiService;
+    private final NaverProductService naverProductService;
+
+    public FashionSearchController(
+        EmbeddingApiService embeddingApiService,
+        NaverProductService naverProductService
+    ) {
+        this.embeddingApiService = embeddingApiService;
+        this.naverProductService = naverProductService;
+    }
 
     /**
-     * 이미지 업로드 검색
+     * 이미지 업로드 → 유사 상품 검색
      *
-     * @param file 이미지 파일
-     * @param topK 결과 개수 (기본: 10)
-     * @param category 카테고리 필터 (선택사항)
-     * @return 검색 결과
+     * @param file  이미지 파일 (multipart/form-data)
+     * @param topK  반환할 결과 수 (기본: 10)
+     * @return      유사 상품 목록
      */
-    @PostMapping("/search/upload")
-    public ResponseEntity<FashionSearchResponse> uploadSearch(
+    @PostMapping("/search")
+    public ResponseEntity<List<NaverProduct>> search(
         @RequestParam("file") MultipartFile file,
-        @RequestParam(value = "top_k", defaultValue = "10") Integer topK,
-        @RequestParam(value = "category", required = false) String category
+        @RequestParam(value = "top_k", defaultValue = "10") int topK
     ) {
-        log.info("Fashion search request: file={}, topK={}, category={}",
-            file.getOriginalFilename(), topK, category);
-
-        // 파일 검증
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().build();
         }
 
-        // 이미지 파일 타입 검증
         String contentType = file.getContentType();
         if (contentType == null || !contentType.startsWith("image/")) {
-            log.warn("Invalid file type: {}", contentType);
+            log.warn("이미지 파일만 허용: {}", contentType);
             return ResponseEntity.badRequest().build();
         }
 
-        try {
-            FashionSearchResponse response = fashionSearchService.searchByImage(
-                file, topK, category
-            );
+        log.info("[FashionSearch] 요청: file={}, topK={}", file.getOriginalFilename(), topK);
 
-            return ResponseEntity.ok(response);
+        // 1. 이미지 → 임베딩 (FastAPI)
+        float[] embedding = embeddingApiService.getEmbedding(file);
 
-        } catch (Exception e) {
-            log.error("Fashion search error", e);
-            return ResponseEntity.internalServerError().build();
-        }
+        // 2. 임베딩 → 유사 상품 (Supabase pgvector)
+        List<NaverProduct> results = naverProductService.searchSimilar(embedding, topK);
+
+        log.info("[FashionSearch] 완료: {}개 결과", results.size());
+        return ResponseEntity.ok(results);
     }
 
     /**
-     * API 헬스 체크
-     *
-     * @return 헬스 상태
+     * 상태 확인
      */
     @GetMapping("/health")
-    public ResponseEntity<HealthResponse> healthCheck() {
-        HealthResponse health = fashionSearchService.checkHealth();
-
-        if (health == null) {
-            return ResponseEntity.status(503).build();
+    public ResponseEntity<String> health() {
+        boolean aiHealthy = embeddingApiService.isHealthy();
+        if (aiHealthy) {
+            return ResponseEntity.ok("{\"status\":\"healthy\",\"ai_server\":true}");
+        } else {
+            return ResponseEntity.status(503)
+                .body("{\"status\":\"ai_server_down\",\"ai_server\":false}");
         }
-
-        return ResponseEntity.ok(health);
     }
 }

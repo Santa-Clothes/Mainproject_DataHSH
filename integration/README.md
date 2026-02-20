@@ -1,189 +1,206 @@
-# Fashion Search API - 프론트엔드 통합 가이드
+# Fashion Search - Spring 백엔드 연동 가이드
 
-**상태:** 연동 검증 완료 ✅
-**API:** http://localhost:8001
-**데이터:** Nine Oz 4,621개 + Naver 7,538개 = 총 12,159개 제품
-
----
-
-## 전체 흐름
-
-```
-[Next.js 프론트]
-      │  이미지 파일 (multipart/form-data)
-      ▼
-[FastAPI 백엔드 :8001]
-      │  FashionCLIP → 이미지 임베딩(768차원) 생성
-      │  FAISS 벡터 인덱스로 유사 상품 검색
-      ▼
-[Supabase DB]
-      │  naver_products 테이블 (7,538개, 임베딩 포함)
-      ▼
-[FastAPI 백엔드]
-      │  유사도 순 정렬, JSON 응답
-      ▼
-[Next.js 프론트]
-      │  상품 목록 + 스타일 분포 표시
-```
+**대상:** Spring 백엔드 담당자
+**FastAPI 서버:** `http://localhost:8002` (AI 임베딩 전용)
 
 ---
 
-## Next.js 통합 (필수)
-
-### 1단계: API 클라이언트 복사
+## 아키텍처
 
 ```
-integration/examples/fashionSearch.ts  →  (Next.js 프로젝트)/lib/fashionSearch.ts
+[Frontend]
+     │  이미지 파일
+     ▼
+[Spring]  ← 모든 비즈니스 로직 + DB 접근 여기서만
+     │
+     ├─── POST http://localhost:8002/embed  ──▶  [FastAPI AI 서버]
+     │         이미지 → 768차원 벡터 반환             FashionCLIP 모델
+     │
+     └─── Supabase RPC 호출 (pgvector)
+              match_naver_products(embedding, 100)
+              유사도 높은 상품 top-N 반환
+     │
+     ▼
+[Frontend] 결과 반환
 ```
 
-### 2단계: 환경 변수
+### 역할 분리
 
-```env
-# .env.local
-NEXT_PUBLIC_FASHION_SEARCH_API=http://localhost:8001
-```
+| 담당 | 역할 |
+|---|---|
+| **FastAPI** | 이미지 → 768차원 임베딩 벡터 변환만 담당 (DB 접근 없음) |
+| **Spring** | 임베딩 요청, Supabase 조회, 결과 가공, 프론트 응답 |
+| **Supabase** | pgvector로 벡터 유사도 검색 |
 
-### 3단계: 사용
+---
 
-```tsx
-import { searchByImage, getStyleDistribution } from '@/lib/fashionSearch';
+## 1단계: Supabase DB 설정 (최초 1회)
 
-const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-  const file = e.target.files?.[0];
-  if (!file) return;
+Supabase 대시보드 → SQL Editor에서 실행:
 
-  const data = await searchByImage(file, 20); // 20개 요청할수록 스타일 분포 정확
+```sql
+-- pgvector 확장 활성화
+CREATE EXTENSION IF NOT EXISTS vector;
 
-  // 상품 목록
-  console.log(data.results);
+-- 유사도 검색 함수 생성
+CREATE OR REPLACE FUNCTION match_naver_products(
+  query_embedding vector(768),
+  match_count int DEFAULT 100
+)
+RETURNS TABLE (
+  product_id text,
+  title text,
+  price int,
+  image_url text,
+  category_id text,
+  kfashion_category text,
+  similarity float
+)
+LANGUAGE sql STABLE AS $$
+  SELECT
+    product_id::text,
+    title,
+    price,
+    image_url,
+    category_id,
+    kfashion_item_category AS kfashion_category,
+    1 - (embedding <=> query_embedding) AS similarity
+  FROM naver_products
+  WHERE embedding IS NOT NULL
+  ORDER BY embedding <=> query_embedding
+  LIMIT match_count;
+$$;
 
-  // 스타일 분포 (예: [{style: "스트리트", percent: 55}, {style: "캐주얼", percent: 30}, ...])
-  const styles = getStyleDistribution(data.results);
-  console.log(styles);
-};
+-- 검색 성능용 인덱스 (선택, 데이터 많을 때 유효)
+CREATE INDEX IF NOT EXISTS naver_products_embedding_idx
+  ON naver_products
+  USING ivfflat (embedding vector_cosine_ops)
+  WITH (lists = 100);
 ```
 
 ---
 
-## API 엔드포인트
+## 2단계: FastAPI 임베딩 서버 API
 
-### POST /search/upload — 이미지 검색 (핵심)
+### POST /embed — 이미지 → 임베딩 벡터
 
+```
+URL:     http://localhost:8002/embed
+Method:  POST
+Body:    multipart/form-data  { file: 이미지파일 }
+```
+
+**응답:**
+```json
+{
+  "embedding": [0.023, -0.145, 0.872, ...],  // 768개 float
+  "dimension": 768
+}
+```
+
+**curl 테스트:**
 ```bash
-curl -X POST "http://localhost:8001/search/upload?top_k=10" \
+curl -X POST http://localhost:8002/embed \
   -F "file=@./image.jpg"
 ```
 
-**Query Parameters:**
-
-| 파라미터 | 필수 | 기본값 | 설명 |
-|---------|------|--------|------|
-| `top_k` | 선택 | 10 | 반환할 결과 수 (최대 100) |
-| `category_filter` | 선택 | 없음 | K-Fashion 카테고리 필터 |
-
-**Response:**
-```json
-{
-  "query": {
-    "query_id": "uuid",
-    "timestamp": "2026-02-19T10:30:00Z",
-    "image_info": { "filename": "image.jpg", "size": 245678, "dimensions": "800x600", "format": "JPEG" }
-  },
-  "results": [
-    {
-      "rank": 1,
-      "product_id": "90233826193",
-      "title": "오버핏 후드 티셔츠",
-      "price": 29900,
-      "image_url": "https://shopping-phinf.pstatic.net/...",
-      "category_id": "50000803",
-      "kfashion_category": "스트리트",
-      "score": 0.891
-    }
-  ],
-  "metrics": {
-    "total_results": 10,
-    "search_time_ms": 480,
-    "total_time_ms": 510,
-    "category_filter": null,
-    "faiss_enabled": true
-  },
-  "stats": {
-    "avg_score": 0.743,
-    "max_score": 0.891,
-    "min_score": 0.612,
-    "score_distribution": { "0.8-1.0": 3, "0.6-0.8": 6, "0.4-0.6": 1, "0.0-0.4": 0 }
-  }
-}
-```
-
-### GET /health — 서버 상태 확인
-
+### GET /health — 서버 상태
 ```bash
-curl http://localhost:8001/health
+curl http://localhost:8002/health
+# {"status": "healthy", "model_loaded": true}
 ```
 
-```json
+---
+
+## 3단계: Spring 구현
+
+`integration/examples/` 폴더의 파일을 프로젝트에 복사해서 사용.
+
+```
+integration/examples/
+├── EmbeddingApiService.java        # FastAPI /embed 호출
+├── NaverProductService.java        # Supabase pgvector 검색
+├── FashionSearchController.java    # 전체 흐름 조합 컨트롤러
+└── RestTemplateConfig.java         # HTTP 클라이언트 설정
+```
+
+### application.yml 설정
+
+```yaml
+fashion:
+  embed:
+    url: http://localhost:8002   # FastAPI AI 서버
+
+supabase:
+  url: https://fjoylosbfvojioljibku.supabase.co
+  key: YOUR_SUPABASE_SERVICE_ROLE_KEY   # service_role key (서버에서만 사용)
+```
+
+### 전체 흐름 요약 (코드)
+
+```java
+// 1. 이미지 → 임베딩 (FastAPI 호출)
+float[] embedding = embeddingApiService.getEmbedding(imageFile);
+
+// 2. 임베딩 → 유사 상품 검색 (Supabase pgvector)
+List<NaverProduct> results = naverProductService.searchSimilar(embedding, topK);
+
+// 3. 결과 반환
+return ResponseEntity.ok(results);
+```
+
+---
+
+## Supabase REST API 형식 (pgvector RPC)
+
+Spring에서 Supabase RPC 호출 방법:
+
+```
+POST https://{project}.supabase.co/rest/v1/rpc/match_naver_products
+Headers:
+  apikey: YOUR_SUPABASE_KEY
+  Authorization: Bearer YOUR_SUPABASE_KEY
+  Content-Type: application/json
+
+Body:
 {
-  "status": "healthy",
-  "model_loaded": true,
-  "nineoz_count": 4621,
-  "naver_count": 7538
+  "query_embedding": [0.023, -0.145, 0.872, ...],
+  "match_count": 20
 }
 ```
 
-### GET /docs — Swagger UI
-
-브라우저에서 http://localhost:8001/docs 접속
-
----
-
-## 스타일 분포 (프론트 집계)
-
-백엔드 수정 없이 `getStyleDistribution()` 함수로 바로 계산 가능.
-FashionCLIP 임베딩 자체에 스타일 정보가 반영되어 있어 결과의 `kfashion_category` + `score`를 집계하면 됨.
-
-```ts
-// fashionSearch.ts에 포함된 함수
-const styles = getStyleDistribution(data.results);
-// [{ style: "스트리트", percent: 55 }, { style: "캐주얼", percent: 30 }, { style: "모던", percent: 15 }]
+**응답:**
+```json
+[
+  {
+    "product_id": "90233826193",
+    "title": "오버핏 후드 티셔츠",
+    "price": 29900,
+    "image_url": "https://...",
+    "category_id": "50000803",
+    "kfashion_category": "스트리트",
+    "similarity": 0.891
+  },
+  ...
+]
 ```
-
-> top_k를 20~30으로 설정할수록 분포가 더 정확해짐.
-
----
-
-## 제공 파일
-
-```
-integration/
-├── README.md                          # 이 파일 (통합 가이드)
-└── examples/
-    ├── fashionSearch.ts               # ⭐ Next.js API 클라이언트 (필수)
-    ├── FashionSearchComponent.tsx     # UI 참고 예시 (Tailwind CSS)
-    ├── RestTemplateConfig.java        # Spring Boot: HTTP 클라이언트 설정
-    ├── FashionSearchService.java      # Spring Boot: API 호출 서비스
-    └── FashionSearchController.java   # Spring Boot: REST 컨트롤러
-```
-
-**Next.js 팀은 `fashionSearch.ts` 하나만 필요.**
-Spring Boot 파일은 백엔드 프록시가 필요한 경우 선택적으로 사용.
 
 ---
 
 ## 트러블슈팅
 
-### API 연결 안됨
+### FastAPI 서버 연결 안됨
 ```bash
-curl http://localhost:8001/health
-# 응답 없으면 API 재시작:
-# cd c:\FinalProject_v2 && python -m uvicorn api.search_api:app --port 8001
+# 서버 상태 확인
+curl http://localhost:8002/health
+
+# AI 서버 재시작 (FinalProject_v2 폴더에서)
+python api/embed_api.py
 ```
 
-### CORS 에러
-API는 모든 오리진(`*`) 허용으로 설정됨. CORS 에러 발생 시 시크릿 모드에서 재테스트.
+### Supabase pgvector 함수 없음 오류
+SQL Editor에서 1단계 SQL을 다시 실행.
 
-### 검색 결과가 없거나 score가 낮음
-- 이미지가 패션 아이템(의류)인지 확인
-- 파일 형식: JPG, PNG 권장
-- 서버 상태 확인: `/health` 에서 `model_loaded: true` 확인
+### 임베딩 차원 불일치
+FastAPI `/embed` 응답의 `dimension`이 768인지 확인.
+Supabase `naver_products.embedding` 컬럼이 `vector(768)` 타입인지 확인.
