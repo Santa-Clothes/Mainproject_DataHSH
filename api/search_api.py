@@ -14,6 +14,9 @@ import uuid
 from datetime import datetime
 
 import numpy as np
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
 from io import BytesIO
 from fastapi import FastAPI, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
@@ -21,6 +24,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from PIL import Image
+from transformers import CLIPModel, CLIPProcessor
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 from api.search_pipeline import SearchPipeline
@@ -53,8 +57,40 @@ if static_dir.exists():
 # 전역 파이프라인 인스턴스
 pipeline: Optional[SearchPipeline] = None
 
+# 스타일 분류기 전역 변수
+STYLES = [
+    "레트로", "로맨틱", "리조트", "매니시", "모던",
+    "밀리터리", "섹시", "소피스트케이티드", "스트리트", "스포티",
+    "아방가르드", "오리엔탈", "웨스턴", "젠더리스", "컨트리",
+    "클래식", "키치", "톰보이", "펑크", "페미닌",
+    "프레피", "히피", "힙합",
+]
+CLASSIFIER_PATH = Path(__file__).parent.parent / "checkpoints" / "style_classifier.pt"
+clip_model: CLIPModel = None
+clip_processor: CLIPProcessor = None
+style_classifier: nn.Sequential = None
+style_labels: List[str] = STYLES
 
-# Request/Response 모델
+
+# ---------- Embed/Analyze Response 모델 ----------
+
+class EmbeddingResponse(BaseModel):
+    embedding: List[float]
+    dimension: int
+
+
+class StylePrediction(BaseModel):
+    style: str
+    score: float
+
+
+class AnalyzeResponse(BaseModel):
+    embedding: List[float]
+    dimension: int
+    styles: List[StylePrediction]
+
+
+# ---------- Search Request/Response 모델 ----------
 class SearchRequest(BaseModel):
     """검색 요청"""
 
@@ -137,6 +173,36 @@ async def startup_event():
         print(f"\n[WARNING] Pipeline initialization failed: {e}")
         print("[INFO] API will start in limited mode (health check only)")
         pipeline = None
+
+    # 스타일 분류기 로드
+    global clip_model, clip_processor, style_classifier, style_labels
+    try:
+        clip_model = CLIPModel.from_pretrained("patrickjohncyh/fashion-clip")
+        clip_processor = CLIPProcessor.from_pretrained("patrickjohncyh/fashion-clip")
+        clip_model.eval()
+        for param in clip_model.parameters():
+            param.requires_grad = False
+        print("[OK] FashionCLIP (full) loaded for style classifier.")
+    except Exception as e:
+        print(f"[WARNING] FashionCLIP full load failed: {e}")
+
+    if CLASSIFIER_PATH.exists() and clip_model is not None:
+        ckpt = torch.load(CLASSIFIER_PATH, map_location="cpu", weights_only=False)
+        emb_dim = ckpt["emb_dim"]
+        num_classes = ckpt["num_classes"]
+        style_classifier = nn.Sequential(
+            nn.Linear(emb_dim, 256),
+            nn.ReLU(),
+            nn.Dropout(0.3),
+            nn.Linear(256, num_classes),
+        )
+        style_classifier.load_state_dict(ckpt["classifier_state_dict"])
+        style_classifier.eval()
+        style_labels = ckpt.get("styles", STYLES)
+        acc = ckpt.get("val_top1", 0) * 100
+        print(f"[OK] Style classifier loaded. Val Top-1: {acc:.1f}%")
+    else:
+        print("[WARNING] Style classifier not found — /analyze unavailable.")
 
     print("="*80)
 
@@ -393,6 +459,64 @@ async def search_by_upload(
             status_code=500,
             detail=f"Failed to process image: {str(e)}"
         )
+
+
+@app.post("/embed", response_model=EmbeddingResponse)
+async def embed_image(file: UploadFile = File(...)):
+    """이미지 → 768차원 임베딩 벡터 반환 (Spring 검색용)"""
+    if pipeline is None or pipeline.embedding_generator is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail=f"이미지 파일만 허용: {file.content_type}")
+
+    contents = await file.read()
+    image = Image.open(BytesIO(contents)).convert("RGB")
+    embedding = pipeline.embedding_generator.generate_embedding(image, normalize=True)
+
+    return EmbeddingResponse(embedding=embedding.tolist(), dimension=len(embedding))
+
+
+@app.post("/analyze", response_model=AnalyzeResponse)
+async def analyze_image(file: UploadFile = File(...), top_k: int = 3):
+    """이미지 → 임베딩 + K-Fashion 스타일 분류 (Top-3)"""
+    if pipeline is None or pipeline.embedding_generator is None:
+        raise HTTPException(status_code=503, detail="Model not loaded")
+
+    if not file.content_type.startswith("image/"):
+        raise HTTPException(status_code=400, detail=f"이미지 파일만 허용: {file.content_type}")
+
+    if style_classifier is None or clip_model is None:
+        raise HTTPException(status_code=503, detail="Style classifier not loaded")
+
+    contents = await file.read()
+    image = Image.open(BytesIO(contents)).convert("RGB")
+
+    # 1. 임베딩 생성
+    embedding = pipeline.embedding_generator.generate_embedding(image, normalize=True)
+
+    # 2. 스타일 분류
+    inputs = clip_processor(images=image, return_tensors="pt")
+    with torch.no_grad():
+        vision_out = clip_model.vision_model(**inputs)
+        img_feat = vision_out.pooler_output
+        img_feat = clip_model.visual_projection(img_feat)
+        img_feat = F.normalize(img_feat, p=2, dim=-1)
+        logits = style_classifier(img_feat)[0]
+        probs = torch.softmax(logits, dim=0)
+
+    top_k = min(top_k, len(style_labels))
+    top_indices = probs.topk(top_k).indices.tolist()
+    styles = [
+        StylePrediction(style=style_labels[i], score=round(probs[i].item(), 4))
+        for i in top_indices
+    ]
+
+    return AnalyzeResponse(
+        embedding=embedding.tolist(),
+        dimension=len(embedding),
+        styles=styles,
+    )
 
 
 @app.get("/categories", response_model=Dict)
