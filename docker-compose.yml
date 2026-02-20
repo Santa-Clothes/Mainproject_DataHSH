@@ -29,6 +29,29 @@ services:
           cpus: '2'
           memory: 4G
 
+  embed-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.embed
+    container_name: fashion-embed-api
+    ports:
+      - "8002:8002"
+    volumes:
+      # style_classifier.pt 등 체크포인트를 외부에서 마운트
+      - ./checkpoints:/app/checkpoints
+    environment:
+      - DEVICE=cpu
+      - LOG_LEVEL=INFO
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 6G
+        reservations:
+          cpus: '1'
+          memory: 4G
+
   # GPU 버전 (NVIDIA GPU 있을 때)
   # fashion-search-gpu:
   #   build: .
