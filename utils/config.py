@@ -33,8 +33,10 @@ ALL_CATEGORIES = [
 class DataConfig:
     """데이터 경로 설정 (pathlib 사용)"""
 
-    # 기본 데이터 경로
-    data_root: Path = Path("C:/K-fashion")
+    # 기본 데이터 경로 (환경변수 DATA_ROOT로 오버라이드 가능)
+    data_root: Path = field(
+        default_factory=lambda: Path(os.getenv("DATA_ROOT", "C:/K-fashion"))
+    )
 
     @property
     def train_data_path(self) -> Path:

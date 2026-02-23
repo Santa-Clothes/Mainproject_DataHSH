@@ -1,10 +1,3 @@
-"""
-Fashion JSON Encoder Models Package
+from .embedding_generator import FashionCLIPEmbeddingGenerator
 
-This package contains the core neural network models for the Fashion JSON Encoder system.
-"""
-
-from .contrastive_learner import ContrastiveLearner
-from .json_encoder import JSONEncoder
-
-__all__ = ["JSONEncoder", "ContrastiveLearner"]
+__all__ = ["FashionCLIPEmbeddingGenerator"]

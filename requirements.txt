@@ -1,14 +1,13 @@
-# Core ML libraries (65GB 대용량 학습 최적화)
+# Core ML libraries
 torch>=2.1.0
 torchvision>=0.16.0
-torchaudio>=2.1.0
 transformers>=4.35.0
 fashion-clip>=0.1.0  # FashionCLIP for fashion-specific image encoding
 
 # Image processing
 Pillow>=10.0.0
 
-# Data handling (대용량 처리 최적화)
+# Data handling
 numpy>=1.24.0
 pandas>=2.0.0
 
@@ -21,9 +20,6 @@ python-dotenv>=1.0.0
 # Database
 supabase>=2.0.0  # Supabase client for product data
 
-# Cloud Storage
-google-cloud-storage>=2.10.0  # Google Cloud Storage for FAISS index
-
 # Web Framework (FastAPI)
 fastapi>=0.104.0
 uvicorn[standard]>=0.24.0
@@ -31,27 +27,10 @@ pydantic>=2.0.0
 python-multipart>=0.0.6  # For file upload support
 requests>=2.31.0  # HTTP library for downloading images
 
-# Visualization
-matplotlib>=3.7.0
-seaborn>=0.13.0  # Enhanced charts with modern styling
+# Utilities
 tqdm>=4.66.0
-rich>=13.7.0  # Beautiful terminal UI and progress display
-
-# Monitoring and logging (분산 학습 지원)
-tensorboard>=2.14.0
-wandb>=0.16.0  # 대용량 실험 추적
-
-# Memory and performance optimization
-psutil>=5.9.0  # 메모리 모니터링
-accelerate>=0.24.0  # Hugging Face 가속화
-
-# Hyperparameter tuning
-optuna>=3.4.0
+rich>=13.7.0
+psutil>=5.9.0
 
 # Testing
 pytest>=7.4.0
-hypothesis>=6.88.0
-
-# GPU 메모리 최적화 (선택사항)
-# nvidia-ml-py3>=7.352.0  # GPU 모니터링
-# torch-tb-profiler>=0.4.0  # 성능 프로파일링

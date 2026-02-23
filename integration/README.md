@@ -1,7 +1,7 @@
 # Fashion Search - Spring 백엔드 연동 가이드
 
 **대상:** Spring 백엔드 담당자
-**FastAPI 서버:** `http://localhost:8002` (AI 임베딩 전용)
+**FastAPI 서버:** `http://localhost:8001` (AI 임베딩 전용)
 
 ---
 
@@ -13,10 +13,10 @@
      ▼
 [Spring]  ← 모든 비즈니스 로직 + DB 접근 여기서만
      │
-     ├─── POST http://localhost:8002/embed    ──▶  [FastAPI AI 서버]
+     ├─── POST http://localhost:8001/embed    ──▶  [FastAPI AI 서버]
      │         이미지 → 768차원 벡터 반환              FashionCLIP 모델
      │
-     ├─── POST http://localhost:8002/analyze  ──▶  [FastAPI AI 서버]
+     ├─── POST http://localhost:8001/analyze  ──▶  [FastAPI AI 서버]
      │         이미지 → 768차원 벡터 + K-Fashion 스타일 분류 (Top-3)
      │         (나인오즈 이미지 분석용)
      │
@@ -89,7 +89,7 @@ CREATE INDEX IF NOT EXISTS naver_products_embedding_idx
 ### POST /embed — 이미지 → 임베딩 벡터 (검색용)
 
 ```
-URL:     http://localhost:8002/embed
+URL:     http://localhost:8001/embed
 Method:  POST
 Body:    multipart/form-data  { file: 이미지파일 }
 ```
@@ -104,7 +104,7 @@ Body:    multipart/form-data  { file: 이미지파일 }
 
 **curl 테스트:**
 ```bash
-curl -X POST http://localhost:8002/embed \
+curl -X POST http://localhost:8001/embed \
   -F "file=@./image.jpg"
 ```
 
@@ -116,7 +116,7 @@ curl -X POST http://localhost:8002/embed \
 FashionCLIP + MLP 분류기 (K-Fashion 23개 스타일, Top-1 정확도 45.3%).
 
 ```
-URL:     http://localhost:8002/analyze
+URL:     http://localhost:8001/analyze
 Method:  POST
 Body:    multipart/form-data  { file: 이미지파일 }
 Params:  top_k=3  (반환할 스타일 수, 기본값 3)
@@ -140,7 +140,7 @@ Params:  top_k=3  (반환할 스타일 수, 기본값 3)
 
 **curl 테스트:**
 ```bash
-curl -X POST http://localhost:8002/analyze \
+curl -X POST http://localhost:8001/analyze \
   -F "file=@./image.jpg"
 ```
 
@@ -153,7 +153,7 @@ curl -X POST http://localhost:8002/analyze \
 
 ### GET /health — 서버 상태
 ```bash
-curl http://localhost:8002/health
+curl http://localhost:8001/health
 # {"status": "healthy", "model_loaded": true, "style_classifier": true}
 ```
 
@@ -176,7 +176,7 @@ integration/examples/
 ```yaml
 fashion:
   embed:
-    url: http://localhost:8002   # FastAPI AI 서버
+    url: http://localhost:8001   # FastAPI AI 서버
 
 supabase:
   url: https://fjoylosbfvojioljibku.supabase.co
@@ -257,10 +257,10 @@ Body:
 ### FastAPI 서버 연결 안됨
 ```bash
 # 서버 상태 확인
-curl http://localhost:8002/health
+curl http://localhost:8001/health
 
 # AI 서버 재시작 (FinalProject_v2 폴더에서)
-python api/embed_api.py
+uvicorn api.search_api:app --host 0.0.0.0 --port 8001 --reload
 ```
 
 ### Supabase pgvector 함수 없음 오류
