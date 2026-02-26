@@ -85,10 +85,6 @@ class SupabaseLoader:
 
                 df = pd.DataFrame(all_data)
 
-            # 컬럼 매핑: style → kfashion_item_category
-            if 'style' in df.columns:
-                df.rename(columns={'style': 'kfashion_item_category'}, inplace=True)
-
             print(f"[Supabase] Loaded {len(df)} rows from {table_name}")
             return df
 

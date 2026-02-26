@@ -34,3 +34,6 @@ psutil>=5.9.0
 
 # Testing
 pytest>=7.4.0
+
+# Gradio Demo UI
+gradio>=4.0.0

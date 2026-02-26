@@ -152,14 +152,17 @@ class SearchPipeline:
             raise ValueError(f"Index {index} out of range")
 
         row = self.nineoz_df.iloc[index]
+        # 나인온스 category_id는 이미 K-Fashion 코드(BL, OP, SK …)
+        # → 의미 기반 표준 필드명 kfashion_category 로 노출
+        kfashion_category = str(row.get("category_id", ""))
         return {
             "index": index,
-            "product_code": row.get("product_id", ""),
-            "product_name": row.get("product_name", ""),
-            "category_code": row.get("category_id", ""),
-            "category_name": row.get("category_name", ""),  # May not exist
-            "color": row.get("color", ""),
-            "category_id": row.get("category_id", ""),  # For evaluation script
+            "product_code": str(row.get("product_id", "")),
+            "product_name": str(row.get("product_name", "")),
+            "image_url": str(row.get("image_url", "")),
+            "color": str(row.get("color", "")),
+            "kfashion_category": kfashion_category,  # 아이템 타입 (BL, OP, SK …)
+            "style_id": str(row.get("style_id", "")),  # 스타일 코드 (CAS, FEM …)
         }
 
     def search_by_embedding(
@@ -206,7 +209,7 @@ class SearchPipeline:
                     "price": int(row["price"]) if pd.notna(row["price"]) else 0,
                     "image_url": str(row["image_url"]),
                     "category_id": str(row["category_id"]),
-                    "kfashion_category": str(row.get("kfashion_item_category", "")),
+                    "style_id": str(row.get("style_id", "")),
                     "score": float(score),
                 })
 
@@ -248,7 +251,7 @@ class SearchPipeline:
                 "price": int(row["price"]) if pd.notna(row["price"]) else 0,
                 "image_url": str(row["image_url"]),
                 "category_id": str(row["category_id"]),
-                "kfashion_category": str(row.get("kfashion_item_category", "")),
+                "style_id": str(row.get("style_id", "")),
                 "score": float(similarities[idx]),  # 코사인 유사도 점수
             })
 
@@ -258,20 +261,26 @@ class SearchPipeline:
         self, results: List[Dict], target_category: str
     ) -> List[Dict]:
         """
-        카테고리 필터링
+        카테고리 필터링 — 의미 기반 K-Fashion 카테고리 기준
+
+        플랫폼 종속 category_id(숫자 ID)가 아닌
+        kfashion_category(의미 기반 코드: BL, OP, SK …)를 기준으로 필터링합니다.
+        이 방식은 다른 쇼핑몰로 확장 시에도 동일하게 적용됩니다.
 
         Args:
             results: 검색 결과
-            target_category: 타겟 카테고리 ID (e.g., 'BL', 'OP', 'SK')
+            target_category: K-Fashion 카테고리 코드 (e.g., 'BL', 'OP', 'SK')
 
         Returns:
             필터링된 결과
         """
+        if not target_category:
+            return results
+
         filtered = []
         for result in results:
+            # category_id: 나인온스/네이버 공통 아이템 타입 코드 (BL, OP, SK …)
             result_category = result.get("category_id", "")
-
-            # 타겟 카테고리 일치 여부 확인 (exact match)
             if target_category == result_category:
                 filtered.append(result)
 
@@ -316,12 +325,20 @@ class SearchPipeline:
         # 1. 쿼리 아이템 가져오기
         query_item = self.get_query_item(query_index)
         print(f"\n[Search] Query: {query_item['product_name']} ({query_item['color']})")
-        print(f"[Search] Category: {query_item.get('category_id', '')}")
+        print(f"[Search] K-Fashion Category: {query_item['kfashion_category']}")
 
         # 2. 쿼리 임베딩 생성
         if query_embedding is None:
             if query_image is None:
-                raise ValueError("Either query_image or query_embedding must be provided")
+                # query_index에 해당하는 이미지 URL을 자동으로 로드
+                image_url = query_item.get("image_url", "")
+                if not image_url:
+                    raise ValueError(
+                        f"query_index {query_index}에 image_url이 없습니다. "
+                        "query_image 또는 query_embedding을 직접 전달하세요."
+                    )
+                query_image = image_url
+                print(f"[Search] Auto-loading image from: {image_url}")
 
             print(f"[Search] Generating query embedding...")
             query_embedding = self.embedding_generator.generate_embedding(
@@ -334,9 +351,9 @@ class SearchPipeline:
         search_results = self.search_by_embedding(query_embedding, top_k=initial_k)
         print(f"[Search] 1. Initial search: {len(search_results)} results")
 
-        # 4. 카테고리 필터링
+        # 4. 카테고리 필터링 — 의미 기반 K-Fashion 카테고리 기준
         filtered_results = self.filter_by_category(
-            search_results, query_item.get("category_id", "")
+            search_results, query_item["kfashion_category"]
         )
         print(f"[Search] 2. After category filter: {len(filtered_results)} results")
 
