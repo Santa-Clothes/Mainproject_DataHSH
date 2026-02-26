@@ -65,6 +65,38 @@ STYLES = [
     "클래식", "키치", "톰보이", "펑크", "페미닌",
     "프레피", "히피", "힙합",
 ]
+
+# 23개 세부 스타일 → 10개 대분류 매핑
+STYLE_MAPPING = {
+    "클래식":          "트래디셔널",
+    "프레피":          "트래디셔널",
+    "매니시":          "매니시",
+    "톰보이":          "매니시",
+    "페미닌":          "페미닌",
+    "로맨틱":          "페미닌",
+    "섹시":            "페미닌",
+    "히피":            "에스닉",
+    "웨스턴":          "에스닉",
+    "오리엔탈":        "에스닉",
+    "모던":            "컨템포러리",
+    "소피스트케이티드": "컨템포러리",
+    "아방가르드":      "컨템포러리",
+    "컨트리":          "내추럴",
+    "리조트":          "내추럴",
+    "젠더리스":        "젠더플루이드",
+    "스포티":          "스포티",
+    "레트로":          "서브컬처",
+    "키치":            "서브컬처",
+    "힙합":            "서브컬처",
+    "펑크":            "서브컬처",
+    "밀리터리":        "캐주얼",
+    "스트리트":        "캐주얼",
+}
+
+TOP10_STYLES = [
+    "트래디셔널", "매니시", "페미닌", "에스닉", "컨템포러리",
+    "내추럴", "젠더플루이드", "스포티", "서브컬처", "캐주얼",
+]
 CLASSIFIER_PATH = Path(__file__).parent.parent / "checkpoints" / "style_classifier.pt"
 clip_model: CLIPModel = None
 clip_processor: CLIPProcessor = None
@@ -107,7 +139,7 @@ class ProductInfo(BaseModel):
     price: float
     image_url: str
     category_id: str
-    kfashion_category: str
+    style_id: str
     score: float
 
 
@@ -302,7 +334,6 @@ async def search(request: SearchRequest):
     try:
         result = pipeline.search(
             query_index=request.query_index,
-            query_embedding=None,  # 모델 없으면 랜덤 사용
             initial_k=request.initial_k,
             final_k=request.final_k,
         )
@@ -315,7 +346,7 @@ async def search(request: SearchRequest):
                 price=item["price"],
                 image_url=item["image_url"],
                 category_id=item["category_id"],
-                kfashion_category=item["kfashion_category"],
+                style_id=item.get("style_id", ""),
                 score=item["score"],
             )
             for item in result["results"]
@@ -505,11 +536,23 @@ async def analyze_image(file: UploadFile = File(...), top_k: int = 3):
         logits = style_classifier(img_feat)[0]
         probs = torch.softmax(logits, dim=0)
 
-    top_k = min(top_k, len(style_labels))
-    top_indices = probs.topk(top_k).indices.tolist()
+    # 23개 확률 → 10개 대분류로 집계
+    top10_probs: Dict[str, float] = {s: 0.0 for s in TOP10_STYLES}
+    for i, label in enumerate(style_labels):
+        parent = STYLE_MAPPING.get(label)
+        if parent:
+            top10_probs[parent] += probs[i].item()
+
+    # 합계로 재정규화 (매핑 누락 항목 대비)
+    total = sum(top10_probs.values())
+    if total > 0:
+        top10_probs = {k: v / total for k, v in top10_probs.items()}
+
+    sorted_styles = sorted(top10_probs.items(), key=lambda x: x[1], reverse=True)
+    top_k_capped = min(top_k, len(sorted_styles))
     styles = [
-        StylePrediction(style=style_labels[i], score=round(probs[i].item(), 4))
-        for i in top_indices
+        StylePrediction(style=s, score=round(p, 4))
+        for s, p in sorted_styles[:top_k_capped]
     ]
 
     return AnalyzeResponse(
@@ -532,12 +575,14 @@ async def get_categories():
 
     # 나인오즈 카테고리 통계
     nineoz_categories = (
-        pipeline.nineoz_df["kfashion_item_category"].value_counts().to_dict()
+        pipeline.nineoz_df["category_id"].value_counts().to_dict()
+        if "category_id" in pipeline.nineoz_df.columns else {}
     )
 
     # 네이버 카테고리 통계
     naver_categories = (
-        pipeline.naver_df["kfashion_item_category"].value_counts().to_dict()
+        pipeline.naver_df["category_id"].value_counts().to_dict()
+        if "category_id" in pipeline.naver_df.columns else {}
     )
 
     return {
@@ -560,16 +605,19 @@ async def get_statistics():
     return {
         "nineoz": {
             "total_products": len(pipeline.nineoz_df),
-            "unique_categories": pipeline.nineoz_df["kfashion_item_category"]
-            .nunique(),
-            "unique_colors": pipeline.nineoz_df["칼라명"].nunique()
-            if "칼라명" in pipeline.nineoz_df.columns
-            else 0,
+            "unique_categories": pipeline.nineoz_df["category_id"].nunique()
+            if "category_id" in pipeline.nineoz_df.columns else 0,
+            "unique_styles": pipeline.nineoz_df["style_id"].nunique()
+            if "style_id" in pipeline.nineoz_df.columns else 0,
+            "unique_colors": pipeline.nineoz_df["color"].nunique()
+            if "color" in pipeline.nineoz_df.columns else 0,
         },
         "naver": {
             "total_products": len(pipeline.naver_df),
-            "unique_categories": pipeline.naver_df["kfashion_item_category"]
-            .nunique(),
+            "unique_categories": pipeline.naver_df["category_id"].nunique()
+            if "category_id" in pipeline.naver_df.columns else 0,
+            "unique_styles": pipeline.naver_df["style_id"].nunique()
+            if "style_id" in pipeline.naver_df.columns else 0,
         },
     }
 

@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fashion Image Search</title>
+    <title>K-Fashion Image Search</title>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -30,406 +26,659 @@
         .header {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 30px;
-            text-align: center;
+            padding: 28px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+        .header-left h1 { font-size: 2em; margin-bottom: 4px; }
+        .header-left p { font-size: 0.95em; opacity: 0.85; }
+
+        .header-badges { display: flex; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+        .badge {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.4);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.8em;
         }
 
-        .header p {
-            font-size: 1.1em;
-            opacity: 0.9;
-        }
-
+        /* ── 업로드 + 옵션 ── */
         .upload-section {
-            padding: 40px;
-            text-align: center;
+            padding: 36px 40px;
             border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            gap: 30px;
+            align-items: flex-start;
         }
 
         .upload-box {
+            flex: 1;
             border: 3px dashed #667eea;
             border-radius: 15px;
-            padding: 40px;
+            padding: 36px 20px;
             background: #f8f9ff;
             cursor: pointer;
             transition: all 0.3s;
+            text-align: center;
         }
-
-        .upload-box:hover {
-            background: #f0f2ff;
+        .upload-box:hover, .upload-box.dragover {
+            background: #eef0ff;
             border-color: #764ba2;
         }
+        .upload-icon { font-size: 3.5em; margin-bottom: 14px; }
+        .upload-box h2 { font-size: 1.1em; color: #444; }
+        .upload-box p { margin-top: 8px; color: #888; font-size: 0.9em; }
+        #fileInput { display: none; }
 
-        .upload-box.dragover {
-            background: #e8ebff;
-            border-color: #764ba2;
-            transform: scale(1.02);
+        .options-panel {
+            width: 240px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
         }
 
-        #fileInput {
-            display: none;
+        .option-group label {
+            display: block;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
         }
 
-        .upload-icon {
-            font-size: 4em;
-            margin-bottom: 20px;
+        select, input[type=range] {
+            width: 100%;
+            padding: 8px 12px;
+            border: 2px solid #dde;
+            border-radius: 8px;
+            font-size: 0.95em;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        select:focus { border-color: #667eea; }
+
+        input[type=range] {
+            padding: 4px 0;
+            border: none;
+            accent-color: #667eea;
+        }
+        .range-value {
+            text-align: right;
+            font-size: 0.85em;
+            color: #667eea;
+            font-weight: 600;
+            margin-top: 2px;
         }
 
         .btn {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
-            padding: 12px 30px;
+            padding: 11px 22px;
             border-radius: 25px;
-            font-size: 1.1em;
+            font-size: 1em;
             cursor: pointer;
-            margin: 10px;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            width: 100%;
         }
-
-        .btn:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        .btn:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(102,126,234,0.4); }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+        .btn-outline {
+            background: white;
+            color: #667eea;
+            border: 2px solid #667eea;
         }
+        .btn-outline:hover { background: #f0f2ff; }
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-
+        /* ── 미리보기 ── */
         .preview-section {
             padding: 20px 40px;
             display: none;
+            background: #fafafa;
+            border-bottom: 1px solid #eee;
         }
-
+        .preview-inner {
+            display: flex;
+            align-items: flex-start;
+            gap: 24px;
+        }
         .preview-image {
-            max-width: 300px;
-            max-height: 300px;
+            max-width: 200px;
+            max-height: 200px;
             border-radius: 10px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            object-fit: cover;
         }
+        .preview-actions { display: flex; flex-direction: column; gap: 10px; padding-top: 4px; }
+        .preview-actions .btn { width: 140px; font-size: 0.9em; }
 
-        .results-section {
-            padding: 40px;
+        /* ── 로딩 ── */
+        .loading {
+            text-align: center;
+            padding: 50px 40px;
+            display: none;
+        }
+        .spinner {
+            border: 4px solid #f0f0f0;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 52px;
+            height: 52px;
+            animation: spin 0.9s linear infinite;
+            margin: 0 auto 16px;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ── 에러 ── */
+        .error {
+            margin: 20px 40px;
+            background: #fff0f0;
+            border: 2px solid #ffcccc;
+            color: #c33;
+            padding: 16px 20px;
+            border-radius: 10px;
             display: none;
         }
 
+        /* ── 결과 ── */
+        .results-section { padding: 30px 40px; display: none; }
+
+        .results-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .results-header h2 { font-size: 1.4em; color: #333; }
+
+        /* 메트릭 바 */
+        .metrics-bar {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-bottom: 24px;
+        }
+        .metric-chip {
+            background: #f8f9ff;
+            border: 1px solid #dde;
+            border-radius: 10px;
+            padding: 10px 18px;
+            text-align: center;
+            min-width: 110px;
+        }
+        .metric-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #667eea;
+            line-height: 1;
+        }
+        .metric-label { font-size: 0.75em; color: #888; margin-top: 4px; }
+
+        /* 카드 그리드 */
         .results-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-            gap: 25px;
-            margin-top: 30px;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 22px;
         }
 
         .result-card {
             background: white;
-            border-radius: 15px;
+            border-radius: 14px;
             overflow: hidden;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-            transition: transform 0.3s, box-shadow 0.3s;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.08);
+            transition: transform 0.25s, box-shadow 0.25s;
+            border: 1px solid #eee;
         }
-
         .result-card:hover {
             transform: translateY(-5px);
-            box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+            box-shadow: 0 10px 28px rgba(0,0,0,0.14);
         }
 
+        .card-image-wrap { position: relative; }
         .result-image {
             width: 100%;
-            height: 300px;
+            height: 280px;
             object-fit: cover;
+            display: block;
+            background: #f5f5f5;
         }
-
-        .result-info {
-            padding: 15px;
-        }
-
-        .result-rank {
-            display: inline-block;
+        .rank-badge {
+            position: absolute;
+            top: 10px;
+            left: 10px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.9em;
+            width: 34px;
+            height: 34px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85em;
             font-weight: bold;
-            margin-bottom: 10px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+        }
+        .score-badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.55);
+            color: white;
+            padding: 4px 9px;
+            border-radius: 12px;
+            font-size: 0.78em;
+            font-weight: 600;
         }
 
-        .result-score {
-            float: right;
-            background: #f0f0f0;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 0.9em;
+        .result-info { padding: 14px; }
+
+        .tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 8px; }
+        .tag {
+            padding: 3px 9px;
+            border-radius: 12px;
+            font-size: 0.75em;
+            font-weight: 600;
+        }
+        .tag-category {
+            background: #e8ecff;
+            color: #4455bb;
+        }
+        .tag-style {
+            background: #ffeef8;
+            color: #995588;
         }
 
         .result-title {
-            font-size: 0.95em;
-            margin: 10px 0;
+            font-size: 0.88em;
+            color: #333;
             line-height: 1.4;
-            height: 2.8em;
-            overflow: hidden;
-            text-overflow: ellipsis;
             display: -webkit-box;
             -webkit-line-clamp: 2;
             -webkit-box-orient: vertical;
+            overflow: hidden;
+            margin-bottom: 10px;
         }
 
-        .result-price {
-            font-size: 1.2em;
-            font-weight: bold;
-            color: #667eea;
-            margin-top: 10px;
-        }
-
-        .loading {
-            text-align: center;
-            padding: 40px;
-            display: none;
-        }
-
-        .spinner {
-            border: 4px solid #f3f3f3;
-            border-top: 4px solid #667eea;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite;
-            margin: 0 auto 20px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        .error {
-            background: #fee;
-            border: 2px solid #fcc;
-            color: #c33;
-            padding: 20px;
-            border-radius: 10px;
-            margin: 20px;
-            display: none;
-        }
-
-        .stats {
-            background: #f8f9ff;
-            padding: 20px;
-            border-radius: 10px;
-            margin-bottom: 20px;
+        .result-footer {
             display: flex;
-            justify-content: space-around;
-            flex-wrap: wrap;
+            align-items: center;
+            justify-content: space-between;
         }
-
-        .stat-item {
-            text-align: center;
-            padding: 10px 20px;
-        }
-
-        .stat-value {
-            font-size: 2em;
+        .result-price {
+            font-size: 1.1em;
             font-weight: bold;
             color: #667eea;
         }
 
-        .stat-label {
-            color: #666;
-            margin-top: 5px;
+        .score-bar-wrap {
+            flex: 1;
+            margin-left: 12px;
+        }
+        .score-bar-bg {
+            height: 5px;
+            background: #eee;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .score-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            border-radius: 3px;
+        }
+        .score-text {
+            font-size: 0.72em;
+            color: #888;
+            text-align: right;
+            margin-top: 2px;
+        }
+
+        /* ── 스타일 분류 패널 ── */
+        .style-panel {
+            margin: 0 40px 24px;
+            background: #f8f9ff;
+            border: 1px solid #dde;
+            border-radius: 14px;
+            padding: 20px 24px;
+            display: none;
+        }
+        .style-panel h3 {
+            font-size: 1em;
+            color: #444;
+            margin-bottom: 14px;
+        }
+        .style-bars { display: flex; flex-direction: column; gap: 10px; }
+        .style-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .style-rank {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            font-size: 0.75em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .style-name {
+            width: 90px;
+            font-size: 0.88em;
+            font-weight: 600;
+            color: #333;
+            flex-shrink: 0;
+        }
+        .style-bar-bg {
+            flex: 1;
+            height: 8px;
+            background: #e0e0f0;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+        .style-bar-fill {
+            height: 100%;
+            border-radius: 4px;
+        }
+        .style-bar-fill-1 { background: linear-gradient(90deg, #667eea, #764ba2); }
+        .style-bar-fill-2 { background: linear-gradient(90deg, #a78bfa, #c084fc); }
+        .style-bar-fill-3 { background: linear-gradient(90deg, #c4b5fd, #ddd6fe); }
+        .style-score {
+            width: 44px;
+            font-size: 0.82em;
+            color: #667eea;
+            font-weight: 600;
+            text-align: right;
+            flex-shrink: 0;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <h1>👗 Fashion Image Search</h1>
-            <p>이미지를 업로드하면 유사한 패션 상품을 찾아드립니다</p>
+<div class="container">
+
+    <!-- 헤더 -->
+    <div class="header">
+        <div class="header-left">
+            <h1>K-Fashion Image Search</h1>
+            <p>이미지를 업로드하면 유사한 네이버 쇼핑 상품을 찾아드립니다</p>
         </div>
-
-        <div class="upload-section">
-            <div class="upload-box" id="uploadBox" onclick="document.getElementById('fileInput').click()">
-                <div class="upload-icon">📤</div>
-                <h2>이미지를 드래그하거나 클릭해서 업로드</h2>
-                <p style="margin-top: 10px; color: #666;">JPG, PNG 파일 지원</p>
-            </div>
-            <input type="file" id="fileInput" accept="image/*">
-
-            <div style="margin-top: 20px;">
-                <label>결과 개수: </label>
-                <select id="topK" style="padding: 8px; border-radius: 5px; border: 2px solid #667eea;">
-                    <option value="6">6개</option>
-                    <option value="9" selected>9개</option>
-                    <option value="12">12개</option>
-                    <option value="15">15개</option>
-                    <option value="20">20개</option>
-                </select>
-            </div>
-        </div>
-
-        <div class="preview-section" id="previewSection">
-            <h3>업로드한 이미지:</h3>
-            <div style="margin-top: 15px;">
-                <img id="previewImage" class="preview-image" alt="Preview">
-            </div>
-            <div style="margin-top: 20px;">
-                <button class="btn" onclick="searchImage()">🔍 검색 시작</button>
-                <button class="btn" onclick="reset()">🔄 다시 선택</button>
-            </div>
-        </div>
-
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <h3>검색 중...</h3>
-            <p>유사한 상품을 찾고 있습니다</p>
-        </div>
-
-        <div class="error" id="error"></div>
-
-        <div class="results-section" id="resultsSection">
-            <h2>검색 결과</h2>
-            <div class="stats" id="stats"></div>
-            <div class="results-grid" id="resultsGrid"></div>
+        <div class="header-badges">
+            <span class="badge" id="statusBadge">서버 확인 중...</span>
+            <span class="badge" id="nineozBadge"></span>
+            <span class="badge" id="naverBadge"></span>
         </div>
     </div>
 
-    <script>
-        const API_URL = 'http://localhost:8001/search/upload';
-        let selectedFile = null;
+    <!-- 업로드 + 옵션 -->
+    <div class="upload-section">
+        <div class="upload-box" id="uploadBox" onclick="document.getElementById('fileInput').click()">
+            <div class="upload-icon">📤</div>
+            <h2>이미지를 드래그하거나 클릭해서 업로드</h2>
+            <p>JPG, PNG 파일 지원</p>
+        </div>
+        <input type="file" id="fileInput" accept="image/*">
 
-        const uploadBox = document.getElementById('uploadBox');
-        const fileInput = document.getElementById('fileInput');
-        const previewSection = document.getElementById('previewSection');
-        const previewImage = document.getElementById('previewImage');
-        const loading = document.getElementById('loading');
-        const error = document.getElementById('error');
-        const resultsSection = document.getElementById('resultsSection');
-        const resultsGrid = document.getElementById('resultsGrid');
-        const stats = document.getElementById('stats');
+        <div class="options-panel">
+            <div class="option-group">
+                <label>결과 개수</label>
+                <input type="range" id="topK" min="3" max="20" value="9"
+                       oninput="document.getElementById('topKVal').textContent=this.value+'개'">
+                <div class="range-value" id="topKVal">9개</div>
+            </div>
 
-        // 파일 선택 처리
-        fileInput.addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            if (file) {
-                handleFile(file);
-            }
-        });
+            <div class="option-group">
+                <label>카테고리 필터 (선택)</label>
+                <select id="categoryFilter">
+                    <option value="">전체 카테고리</option>
+                    <option value="BL">BL — 블라우스</option>
+                    <option value="OP">OP — 원피스</option>
+                    <option value="SK">SK — 스커트</option>
+                    <option value="PT">PT — 팬츠</option>
+                    <option value="JK">JK — 재킷</option>
+                    <option value="CT">CT — 코트</option>
+                    <option value="KN">KN — 니트</option>
+                    <option value="TS">TS — 티셔츠</option>
+                    <option value="JP">JP — 점프수트</option>
+                    <option value="SH">SH — 셔츠</option>
+                </select>
+            </div>
+        </div>
+    </div>
 
-        // 드래그 앤 드롭
-        uploadBox.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadBox.classList.add('dragover');
-        });
+    <!-- 이미지 미리보기 -->
+    <div class="preview-section" id="previewSection">
+        <div class="preview-inner">
+            <img id="previewImage" class="preview-image" alt="Preview">
+            <div class="preview-actions">
+                <button class="btn" onclick="searchImage()">🔍 검색 시작</button>
+                <button class="btn btn-outline" onclick="resetUI()">🔄 다시 선택</button>
+            </div>
+        </div>
+    </div>
 
-        uploadBox.addEventListener('dragleave', () => {
-            uploadBox.classList.remove('dragover');
-        });
+    <!-- 로딩 -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <h3 style="color:#555;">유사 상품 검색 중...</h3>
+        <p style="color:#888;margin-top:8px;">FashionCLIP 임베딩 + FAISS 인덱스 검색</p>
+    </div>
 
-        uploadBox.addEventListener('drop', (e) => {
-            e.preventDefault();
-            uploadBox.classList.remove('dragover');
-            const file = e.dataTransfer.files[0];
-            if (file && file.type.startsWith('image/')) {
-                handleFile(file);
-            }
-        });
+    <!-- 에러 -->
+    <div class="error" id="error"></div>
 
-        function handleFile(file) {
-            selectedFile = file;
+    <!-- 스타일 분류 결과 -->
+    <div class="style-panel" id="stylePanel">
+        <h3>🎨 스타일 분류 (Top-3)</h3>
+        <div class="style-bars" id="styleBars"></div>
+    </div>
 
-            // 미리보기
-            const reader = new FileReader();
-            reader.onload = (e) => {
-                previewImage.src = e.target.result;
-                previewSection.style.display = 'block';
-                resultsSection.style.display = 'none';
-                error.style.display = 'none';
-            };
-            reader.readAsDataURL(file);
+    <!-- 결과 -->
+    <div class="results-section" id="resultsSection">
+        <div class="results-header">
+            <h2>검색 결과</h2>
+            <button class="btn btn-outline" style="width:auto;padding:8px 18px;font-size:0.9em;" onclick="resetUI()">새 검색</button>
+        </div>
+
+        <div class="metrics-bar" id="metricsBar"></div>
+        <div class="results-grid" id="resultsGrid"></div>
+    </div>
+
+</div>
+
+<script>
+    const API_BASE = 'http://localhost:8001';
+    let selectedFile = null;
+
+    // ── 서버 상태 확인 ──────────────────────────────────────────
+    async function checkHealth() {
+        try {
+            const res = await fetch(`${API_BASE}/health`);
+            const data = await res.json();
+            document.getElementById('statusBadge').textContent =
+                data.status === 'healthy' ? '● 서버 정상' : '● 제한 모드';
+            if (data.nineoz_count)
+                document.getElementById('nineozBadge').textContent = `나인오즈 ${data.nineoz_count.toLocaleString()}개`;
+            if (data.naver_count)
+                document.getElementById('naverBadge').textContent = `네이버 ${data.naver_count.toLocaleString()}개`;
+        } catch {
+            document.getElementById('statusBadge').textContent = '● 서버 오프라인';
         }
+    }
+    checkHealth();
 
-        async function searchImage() {
-            if (!selectedFile) return;
+    // ── 파일 업로드 처리 ──────────────────────────────────────────
+    const uploadBox  = document.getElementById('uploadBox');
+    const fileInput  = document.getElementById('fileInput');
 
-            // UI 업데이트
-            loading.style.display = 'block';
-            resultsSection.style.display = 'none';
-            error.style.display = 'none';
+    fileInput.addEventListener('change', e => {
+        if (e.target.files[0]) handleFile(e.target.files[0]);
+    });
 
-            // FormData 생성
-            const formData = new FormData();
-            formData.append('file', selectedFile);
+    uploadBox.addEventListener('dragover', e => {
+        e.preventDefault();
+        uploadBox.classList.add('dragover');
+    });
+    uploadBox.addEventListener('dragleave', () => uploadBox.classList.remove('dragover'));
+    uploadBox.addEventListener('drop', e => {
+        e.preventDefault();
+        uploadBox.classList.remove('dragover');
+        const f = e.dataTransfer.files[0];
+        if (f && f.type.startsWith('image/')) handleFile(f);
+    });
 
-            const topK = document.getElementById('topK').value;
+    function handleFile(file) {
+        selectedFile = file;
+        const reader = new FileReader();
+        reader.onload = e => {
+            document.getElementById('previewImage').src = e.target.result;
+            document.getElementById('previewSection').style.display = 'block';
+            document.getElementById('resultsSection').style.display = 'none';
+            document.getElementById('error').style.display = 'none';
+        };
+        reader.readAsDataURL(file);
+    }
 
-            try {
-                const response = await fetch(`${API_URL}?top_k=${topK}`, {
-                    method: 'POST',
-                    body: formData
-                });
+    // ── 검색 ────────────────────────────────────────────────────
+    async function searchImage() {
+        if (!selectedFile) return;
 
-                if (!response.ok) {
-                    throw new Error(`API Error: ${response.status}`);
-                }
+        document.getElementById('loading').style.display = 'block';
+        document.getElementById('resultsSection').style.display = 'none';
+        document.getElementById('stylePanel').style.display = 'none';
+        document.getElementById('error').style.display = 'none';
 
-                const data = await response.json();
-                displayResults(data);
+        const topK     = document.getElementById('topK').value;
+        const category = document.getElementById('categoryFilter').value;
 
-            } catch (err) {
-                error.textContent = `에러 발생: ${err.message}`;
-                error.style.display = 'block';
-            } finally {
-                loading.style.display = 'none';
+        const formData  = new FormData();
+        formData.append('file', selectedFile);
+        const formData2 = new FormData();
+        formData2.append('file', selectedFile);
+
+        let url = `${API_BASE}/search/upload?top_k=${topK}`;
+        if (category) url += `&category_filter=${category}`;
+
+        try {
+            // 검색 + 스타일 분류 병렬 호출
+            const [searchRes, analyzeRes] = await Promise.all([
+                fetch(url, { method: 'POST', body: formData }),
+                fetch(`${API_BASE}/analyze`, { method: 'POST', body: formData2 }).catch(() => null),
+            ]);
+
+            if (!searchRes.ok) {
+                const err = await searchRes.json().catch(() => ({}));
+                throw new Error(err.detail || `HTTP ${searchRes.status}`);
             }
+            const data = await searchRes.json();
+            displayResults(data);
+
+            // 스타일 분류 결과 표시
+            if (analyzeRes && analyzeRes.ok) {
+                const analyzeData = await analyzeRes.json();
+                displayStyles(analyzeData.styles || []);
+            }
+        } catch (err) {
+            const el = document.getElementById('error');
+            el.textContent = `에러: ${err.message}`;
+            el.style.display = 'block';
+        } finally {
+            document.getElementById('loading').style.display = 'none';
         }
+    }
 
-        function displayResults(data) {
-            const results = data.results || [];
+    // ── 스타일 분류 렌더링 ───────────────────────────────────────
+    function displayStyles(styles) {
+        if (!styles || styles.length === 0) return;
+        const fillClasses = ['style-bar-fill-1', 'style-bar-fill-2', 'style-bar-fill-3'];
+        document.getElementById('styleBars').innerHTML = styles.map((s, i) => `
+            <div class="style-row">
+                <div class="style-rank">${i + 1}</div>
+                <div class="style-name">${s.style}</div>
+                <div class="style-bar-bg">
+                    <div class="style-bar-fill ${fillClasses[i] || 'style-bar-fill-3'}"
+                         style="width:${Math.round(s.score * 100)}%"></div>
+                </div>
+                <div class="style-score">${(s.score * 100).toFixed(1)}%</div>
+            </div>
+        `).join('');
+        document.getElementById('stylePanel').style.display = 'block';
+    }
 
-            // 통계 표시
-            stats.innerHTML = `
-                <div class="stat-item">
-                    <div class="stat-value">${results.length}</div>
-                    <div class="stat-label">검색 결과</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${data.file_size ? Math.round(data.file_size / 1024) : 0}KB</div>
-                    <div class="stat-label">업로드 크기</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value">${results[0]?.score.toFixed(3) || 'N/A'}</div>
-                    <div class="stat-label">최고 유사도</div>
-                </div>
-            `;
+    // ── 결과 렌더링 ─────────────────────────────────────────────
+    function displayResults(data) {
+        const results = data.results || [];
+        const metrics = data.metrics || {};
+        const stats   = data.stats   || {};
+        const imgInfo = (data.query || {}).image_info || {};
 
-            // 결과 카드 생성
-            resultsGrid.innerHTML = results.map((item, idx) => `
-                <div class="result-card">
-                    <img src="${item.image_url}" alt="${item.title}" class="result-image"
-                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 width=%22280%22 height=%22300%22><rect fill=%22%23ddd%22 width=%22280%22 height=%22300%22/><text x=%2250%%22 y=%2250%%22 fill=%22%23999%22 text-anchor=%22middle%22 dy=%22.3em%22>이미지 로드 실패</text></svg>'">
-                    <div class="result-info">
-                        <span class="result-rank">#${idx + 1}</span>
-                        <span class="result-score">유사도: ${item.score.toFixed(3)}</span>
-                        <div class="result-title">${item.title}</div>
-                        <div class="result-price">₩${item.price.toLocaleString()}</div>
+        // 메트릭 칩
+        document.getElementById('metricsBar').innerHTML = [
+            { v: results.length,                          l: '검색 결과' },
+            { v: (metrics.search_time_ms || 0) + ' ms',  l: '검색 시간' },
+            { v: (stats.avg_score  || 0).toFixed(3),      l: '평균 유사도' },
+            { v: (stats.max_score  || 0).toFixed(3),      l: '최고 유사도' },
+            { v: imgInfo.size ? Math.round(imgInfo.size / 1024) + ' KB' : '-', l: '이미지 크기' },
+            { v: metrics.faiss_enabled ? 'FAISS' : 'Numpy', l: '검색 엔진' },
+        ].map(m => `
+            <div class="metric-chip">
+                <div class="metric-value">${m.v}</div>
+                <div class="metric-label">${m.l}</div>
+            </div>
+        `).join('');
+
+        // 카드 생성
+        const fallback = `data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' width='260' height='280'><rect fill='%23eee' width='260' height='280'/><text x='50%25' y='50%25' fill='%23aaa' text-anchor='middle' dy='.3em' font-size='14'>이미지 없음</text></svg>`;
+
+        document.getElementById('resultsGrid').innerHTML = results.map((item, idx) => {
+            const score  = typeof item.score === 'number' ? item.score : 0;
+            const pct    = Math.round(Math.min(score, 1) * 100);
+            const catTag = item.category_id
+                ? `<span class="tag tag-category">${item.category_id}</span>` : '';
+            const styTag = item.style_id
+                ? `<span class="tag tag-style">${item.style_id}</span>` : '';
+
+            return `
+            <div class="result-card">
+                <div class="card-image-wrap">
+                    <img src="${item.image_url || ''}" alt="${item.title || ''}"
+                         class="result-image"
+                         onerror="this.onerror=null;this.src='${fallback}'">
+                    <div class="rank-badge">${idx + 1}</div>
+                    <div class="score-badge">${score.toFixed(3)}</div>
+                </div>
+                <div class="result-info">
+                    <div class="tag-row">${catTag}${styTag}</div>
+                    <div class="result-title">${item.title || '(제목 없음)'}</div>
+                    <div class="result-footer">
+                        <div class="result-price">₩${(item.price || 0).toLocaleString()}</div>
+                        <div class="score-bar-wrap">
+                            <div class="score-bar-bg">
+                                <div class="score-bar-fill" style="width:${pct}%"></div>
+                            </div>
+                            <div class="score-text">유사도 ${pct}%</div>
+                        </div>
                     </div>
                 </div>
-            `).join('');
+            </div>`;
+        }).join('');
 
-            resultsSection.style.display = 'block';
-        }
+        document.getElementById('resultsSection').style.display = 'block';
+    }
 
-        function reset() {
-            selectedFile = null;
-            fileInput.value = '';
-            previewSection.style.display = 'none';
-            resultsSection.style.display = 'none';
-            error.style.display = 'none';
-        }
-    </script>
+    // ── 리셋 ────────────────────────────────────────────────────
+    function resetUI() {
+        selectedFile = null;
+        fileInput.value = '';
+        document.getElementById('previewSection').style.display  = 'none';
+        document.getElementById('stylePanel').style.display      = 'none';
+        document.getElementById('resultsSection').style.display  = 'none';
+        document.getElementById('error').style.display           = 'none';
+    }
+</script>
 </body>
 </html>
