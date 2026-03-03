@@ -57,20 +57,6 @@ uvicorn api.search_api:app --host 0.0.0.0 --port 8001 --reload
 
 ---
 
-## Gradio 데모
-
-FastAPI 서버 실행 후 별도 터미널에서:
-
-```bash
-python gradio_demo.py
-```
-
-- Gradio UI: http://localhost:7860
-
-이미지를 업로드하면 유사 상품 갤러리와 스타일 분류 차트를 확인할 수 있습니다.
-
----
-
 ## API 엔드포인트
 
 | 메서드 | 경로 | 설명 |
@@ -121,7 +107,6 @@ FinalProject_v2/
 │       └── naver.ids.npy    # 상품 ID 매핑
 ├── static/
 │   └── search.html          # 웹 검색 UI
-├── gradio_demo.py           # Gradio 데모 UI (포트 7860)
 ├── .env                     # 환경변수
 └── requirements.txt
 ```
@@ -153,7 +138,6 @@ JSON 응답 반환
 - **Vector Search**: FAISS (faiss-cpu)
 - **Database**: Supabase (PostgreSQL)
 - **Style Classifier**: MLP (PyTorch, 23개 K-Fashion 스타일 → 10개 대분류)
-- **Demo UI**: Gradio
 
 ---
 
@@ -162,4 +146,3 @@ JSON 응답 반환
 - [FashionCLIP](https://huggingface.co/patrickjohncyh/fashion-clip)
 - [FAISS](https://github.com/facebookresearch/faiss)
 - [FastAPI](https://fastapi.tiangolo.com)
-- [Gradio](https://www.gradio.app)
