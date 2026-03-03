@@ -83,7 +83,7 @@ STYLE_MAPPING = {
     "아방가르드":      "컨템포러리",
     "컨트리":          "내추럴",
     "리조트":          "내추럴",
-    "젠더리스":        "젠더플루이드",
+    "젠더리스":        "젠더리스",
     "스포티":          "스포티",
     "레트로":          "서브컬처",
     "키치":            "서브컬처",
@@ -95,7 +95,7 @@ STYLE_MAPPING = {
 
 TOP10_STYLES = [
     "트래디셔널", "매니시", "페미닌", "에스닉", "컨템포러리",
-    "내추럴", "젠더플루이드", "스포티", "서브컬처", "캐주얼",
+    "내추럴", "젠더리스", "스포티", "서브컬처", "캐주얼",
 ]
 CLASSIFIER_PATH = Path(__file__).parent.parent / "checkpoints" / "style_classifier.pt"
 clip_model: CLIPModel = None
@@ -508,7 +508,7 @@ async def embed_image(file: UploadFile = File(...)):
     return EmbeddingResponse(embedding=embedding.tolist(), dimension=len(embedding))
 
 
-@app.post("/analyze", response_model=AnalyzeResponse)
+@app.post("/analyze")
 async def analyze_image(file: UploadFile = File(...), top_k: int = 3):
     """이미지 → 임베딩 + K-Fashion 스타일 분류 (Top-3)"""
     if pipeline is None or pipeline.embedding_generator is None:
@@ -520,46 +520,51 @@ async def analyze_image(file: UploadFile = File(...), top_k: int = 3):
     if style_classifier is None or clip_model is None:
         raise HTTPException(status_code=503, detail="Style classifier not loaded")
 
-    contents = await file.read()
-    image = Image.open(BytesIO(contents)).convert("RGB")
+    try:
+        contents = await file.read()
+        image = Image.open(BytesIO(contents)).convert("RGB")
 
-    # 1. 임베딩 생성
-    embedding = pipeline.embedding_generator.generate_embedding(image, normalize=True)
+        # 1. 임베딩 생성
+        embedding = pipeline.embedding_generator.generate_embedding(image, normalize=True)
 
-    # 2. 스타일 분류
-    inputs = clip_processor(images=image, return_tensors="pt")
-    with torch.no_grad():
-        vision_out = clip_model.vision_model(**inputs)
-        img_feat = vision_out.pooler_output
-        img_feat = clip_model.visual_projection(img_feat)
-        img_feat = F.normalize(img_feat, p=2, dim=-1)
-        logits = style_classifier(img_feat)[0]
-        probs = torch.softmax(logits, dim=0)
+        # 2. 스타일 분류
+        inputs = clip_processor(images=image, return_tensors="pt")
+        with torch.no_grad():
+            vision_out = clip_model.vision_model(**inputs)
+            img_feat = vision_out.pooler_output
+            img_feat = clip_model.visual_projection(img_feat)
+            img_feat = F.normalize(img_feat, p=2, dim=-1)
+            logits = style_classifier(img_feat)[0]
+            probs = torch.softmax(logits, dim=0)
 
-    # 23개 확률 → 10개 대분류로 집계
-    top10_probs: Dict[str, float] = {s: 0.0 for s in TOP10_STYLES}
-    for i, label in enumerate(style_labels):
-        parent = STYLE_MAPPING.get(label)
-        if parent:
-            top10_probs[parent] += probs[i].item()
+        # 23개 확률 → 10개 대분류로 집계
+        top10_probs: Dict[str, float] = {s: 0.0 for s in TOP10_STYLES}
+        for i, label in enumerate(style_labels):
+            parent = STYLE_MAPPING.get(label)
+            if parent:
+                top10_probs[parent] += probs[i].item()
 
-    # 합계로 재정규화 (매핑 누락 항목 대비)
-    total = sum(top10_probs.values())
-    if total > 0:
-        top10_probs = {k: v / total for k, v in top10_probs.items()}
+        # 합계로 재정규화 (매핑 누락 항목 대비)
+        total = sum(top10_probs.values())
+        if total > 0:
+            top10_probs = {k: v / total for k, v in top10_probs.items()}
 
-    sorted_styles = sorted(top10_probs.items(), key=lambda x: x[1], reverse=True)
-    top_k_capped = min(top_k, len(sorted_styles))
-    styles = [
-        StylePrediction(style=s, score=round(p, 4))
-        for s, p in sorted_styles[:top_k_capped]
-    ]
+        sorted_styles = sorted(top10_probs.items(), key=lambda x: x[1], reverse=True)
+        top_k_capped = min(top_k, len(sorted_styles))
+        styles = [
+            StylePrediction(style=s, score=round(p, 4))
+            for s, p in sorted_styles[:top_k_capped]
+        ]
 
-    return AnalyzeResponse(
-        embedding=embedding.tolist(),
-        dimension=len(embedding),
-        styles=styles,
-    )
+        return AnalyzeResponse(
+            embedding=embedding.tolist(),
+            dimension=len(embedding),
+            styles=styles,
+        )
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/categories", response_model=Dict)
