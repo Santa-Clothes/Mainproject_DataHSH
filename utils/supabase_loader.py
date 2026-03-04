@@ -114,25 +114,3 @@ class SupabaseLoader:
             DataFrame with Naver products
         """
         return self.load_table(table_name)
-
-
-if __name__ == "__main__":
-    # 테스트
-    import argparse
-
-    parser = argparse.ArgumentParser(description="Test Supabase Loader")
-    parser.add_argument("--table", type=str, default="naver_products", help="Table name")
-    parser.add_argument("--limit", type=int, default=10, help="Limit rows")
-    args = parser.parse_args()
-
-    loader = SupabaseLoader()
-    df = loader.load_table(args.table, limit=args.limit)
-
-    print("\n" + "=" * 80)
-    print(f"Table: {args.table}")
-    print(f"Shape: {df.shape}")
-    print("=" * 80)
-    print("\nFirst 5 rows:")
-    print(df.head())
-    print("\nColumns:")
-    print(df.columns.tolist())
