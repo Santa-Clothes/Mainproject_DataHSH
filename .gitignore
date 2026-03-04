@@ -103,10 +103,4 @@ archive/
 # FAISS Indexes
 *.index
 
-# Docker
-key.json
-*.pem
 
-# Integration examples (if sensitive)
-integration/spring-boot/application-secret.yml
-integration/nextjs/.env.local
